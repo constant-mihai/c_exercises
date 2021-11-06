@@ -18,13 +18,12 @@ typedef struct node {
 
 int trie_insert(node_t *trie, const char* ip) {
     for (size_t i=0; i<strlen(ip); i++) {
-        //LOG("%c:", ip[i]);
         char c = ip[i];
         if ( c == '.' ) {
             continue;
         }
         int p = atoi(&c);
-        LOG("%d:", p);
+        //LOG("inserting %d", p);
         assert(p >= 0 && p < 10);
         trie->kv[p].child = (node_t*)calloc(1, sizeof(node_t));
         trie = trie->kv[p].child;
@@ -32,34 +31,39 @@ int trie_insert(node_t *trie, const char* ip) {
     return 0;
 }
 
-int trie_search(node_t *trie, const char* ip, size_t *i) {
+typedef enum {
+    SEARCH,
+    REMOVE,
+}sor_e;
+
+int trie_search_or_remove(node_t *trie,
+                           const char* ip,
+                           sor_e sor,
+                           size_t *i) {
     assert(i!=NULL);
-    LOG("iteration %lu:", *i);
     char c = ip[*i];
-    //TODO check here for syntax errors;
+    int found = 0;
+    LOG("iteration %lu: %c", *i, c);
+
+    //TODO check here for syntax errors
     if ( c == '.' ) {
         (*i)++;
         c = ip[*i];
+        LOG("iteration    %c",  c);
     }
     int p = atoi(&c);
+    // TODO if p is the first digit then check p != 0
+
     assert(p >= 0 && p < 10);
     if (trie->kv[p].child != NULL) {
         (*i)++;
-        return trie_search(trie->kv[p].child, ip, i);
+        found = trie_search_or_remove(trie->kv[p].child, ip, sor, i);
+        if (found == 1 && sor == REMOVE) {
+            free(trie->kv[p].child);
+            trie->kv[p].child = NULL;
+        }
     }
-    return 1;
-}
-
-int trie_remove(node_t *trie, const char* ip) {
-    size_t i = 0;
-    if (trie_search(trie, ip, &i) == 0) {
-        LOG("Full match, removing");
-
-        // TODO
-        return 0;
-    }
-
-    return 1;
+    return (strlen(ip) == (*i)) ? 1 : 0;
 }
 
 void test_search() {
@@ -70,7 +74,20 @@ void test_search() {
     trie_insert(&trie, ip1);
 
     size_t i = 0;
-    assert(trie_search(&trie, ip1, &i) == 0);
+    assert(trie_search_or_remove(&trie, ip1, SEARCH, &i) == 1);
+}
+
+void test_remove() {
+    node_t trie;
+    memset(trie.kv, 0, 10*sizeof(kv_t));
+
+    const char *ip1 = "192.168.1.1";
+    trie_insert(&trie, ip1);
+
+    size_t i = 0;
+    assert(trie_search_or_remove(&trie, ip1, REMOVE, &i) == 1);
+    i = 0;
+    assert(trie_search_or_remove(&trie, ip1, SEARCH, &i) == 0);
 }
 
 void test_insert() {
@@ -85,13 +102,16 @@ void test_insert() {
     assert(trie.kv[1].child->kv[0].child == NULL);
     assert(trie.kv[1].child->kv[1].child == NULL);
     assert(trie.kv[1].child->kv[9].child != NULL);
+    assert(trie.kv[1].child->kv[9].child->kv[2].child != NULL);
+    assert(trie.kv[1].child->kv[9].child->kv[2].child->kv[0].child == NULL);
+    assert(trie.kv[1].child->kv[9].child->kv[2].child->kv[1].child != NULL);
 }
 
-int main(int argc, char ** argv) {
+int main() {
     LOG("main");
-    //test_insert();
+    test_insert();
     test_search();
-    //test_remove();
+    test_remove();
 
     return 0;
 }

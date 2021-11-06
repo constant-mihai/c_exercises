@@ -1,9 +1,8 @@
 # executable name and path
-BIN_NAME = trie
+BIN_NAME = trie 
 BIN_PATH = ./ 
 
 CC ?= gcc
-CXX ?= g++
 
 # source file extensions
 C_EXT = c
@@ -22,8 +21,8 @@ INCLUDES = -I. \
 		   -I$(ROOT_PATH) \
 		   -I/usr/local/include/
 
-CC_COMPILE_FLAGS = -Wall -Wextra -Wcast-align -Werror=return-type
-CXX_COMPILE_FLAGS = -std=c++17 -Wall -Wextra -Wcast-align -Werror=return-type
+CC_COMPILE_FLAGS = -Wall -Wextra -Wcast-align -Werror=return-type -g -O0 -Ddebug
+CXX_COMPILE_FLAGS = -std=c++17 -Wall -Wextra -Wcast-align -Werror=return-type -g -O0 -Ddebug
 
 # source files
 C_SOURCES = $(wildcard *.$(C_EXT)) 
@@ -33,13 +32,6 @@ OBJECTS = $(C_SOURCES:%.$(C_EXT)=%.o) $(CPP_SOURCES:%.$(CPP_EXT)=%.o)
 # dependency files
 DEPS = $(OBJECTS:.o=.d)
 
-ifeq ($(mode),debug)
-	OPTIMIZE_FLAGS = -g -O0 -Ddebug
-else
-	OPTIMIZE_FLAGS = -O3
-	LDFLAGS += -rdynamic
-	DEFINES += -DRDYNAMIC
-endif
 
 .PHONY: default
 default: all;
@@ -47,8 +39,10 @@ default: all;
 .PHONY: all
 all: $(BIN_NAME)
 
+$(OBJECTS): $(C_SOURCES)
+	$(VERBOSE)$(CC) $(CCFLAGS) $(CC_COMPILE_FLAGS) $(INCLUDES) -c $(realpath $<) -o $@
+
 # Link the application
 $(BIN_NAME): $(OBJECTS) $(DEFS_FILE)
 	@echo "Linking: $@"
-	$(VERBOSE)$(CXX) $(OBJECTS) $(LIBS) $(LDFLAGS) -o $@
-
+	$(VERBOSE)$(CC) $(OBJECTS) $(LIBS) $(LDFLAGS) -o $@
