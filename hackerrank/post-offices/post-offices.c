@@ -107,7 +107,7 @@ void send_all_acceptable_packages(town* source, int source_office_index, town* t
 }
 
 town town_with_most_packages(town* towns, int towns_count) {
-    int *sum_packages = malloc(sizeof(int)*towns_count);
+    int *sum_packages = calloc(towns_count, sizeof(int));
     for (int i=0; i<towns_count; i++) {
         for (int po=0; po<towns[i].offices_count; po++) {
             sum_packages[i] += towns[i].offices[po].packages_count;
