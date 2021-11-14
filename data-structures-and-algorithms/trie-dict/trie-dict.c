@@ -3,7 +3,9 @@
 #include <stdio.h>
 #include <assert.h>
 #include <string.h>
+#include <stdlib.h>
 
+//#include "log.h"
 #include "../hash/hash.h"
 
 // each node has a hash table.
@@ -243,6 +245,11 @@ void test_remove() {
 }
 
 int main() {
+    log_config_t log_config = {
+        .log_to_console = 1,
+        .filename = 0, // TODO test this
+    };
+    log_init(log_config);
     LOG("main");
     test_search();
     //test_remove();
