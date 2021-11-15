@@ -20,9 +20,10 @@ ROOT_PATH := $(patsubst %/,%,$(dir $(SRC_DIR)))
 # include subdires
 INCLUDES = -I. \
 		   -I$(ROOT_PATH) \
-		   -I/usr/local/include/
+		   -I/usr/local/include/ \
+		   -I../../
 
-CC_COMPILE_FLAGS = -Wall -Wextra -Wcast-align -Werror=return-type -g -O0 -Ddebug
+CC_COMPILE_FLAGS = -Wall -Wextra -Wcast-align -Werror=return-type -g -O0 -Ddebug -fPIC
 CXX_COMPILE_FLAGS = -std=c++17 -Wall -Wextra -Wcast-align -Werror=return-type -g -O0 -Ddebug
 
 # source files

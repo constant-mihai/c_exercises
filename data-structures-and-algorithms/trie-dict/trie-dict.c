@@ -5,7 +5,6 @@
 #include <string.h>
 #include <stdlib.h>
 
-//#include "log.h"
 #include "../hash/hash.h"
 
 // each node has a hash table.
@@ -14,6 +13,8 @@
 typedef struct node {
     hash_t *hash;
 } node_t;
+
+static int module_idx_g;
 
 #define MAX_HASH_SIZE 1000
 
@@ -249,7 +250,7 @@ int main() {
         .log_to_console = 1,
         .filename = 0, // TODO test this
     };
-    log_init(log_config);
+    module_idx_g = log_init(log_config);
     LOG("main");
     test_search();
     //test_remove();

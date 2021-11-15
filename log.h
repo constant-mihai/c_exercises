@@ -1,4 +1,14 @@
 #pragma once
+/* TODO While this works well enough, it can be done better.
+ *  - Right now the global variables will be shared amongst all modules.
+ *  - Compiling them is tricky:
+ *    usr/bin/ld: hash.o: relocation R_X86_64_PC32 against symbol `log_file_fd_g' can not be used when making a shared object; recompile with -fPIC
+ *
+ * This could be made a library and the global variables hidden away.
+ * It can then be loaded by each executable/shared library.
+ *
+ * TODO it's not multithreading safe
+ */
 
 #include <unistd.h>
 
@@ -9,6 +19,7 @@
 #include <string.h>
 #include <stdint.h>
 #include <stdio.h>
+#include <stdlib.h>
 
 #define USE_COLORS              0
 #define MAX_BUFFER_SIZE 65535
@@ -36,7 +47,10 @@
 #define LOG_HEADER_FORMAT "[%s][%s]%s:%d "
 #define LOG_HEADER_VAL ,__TIME__,__FILE__,__func__,__LINE__
 
-char log_internal_buffer_g[MAX_BUFFER_SIZE];
+char **log_internal_buffer_g;
+int log_initialized_g = 0;
+size_t log_module_len_g = 0;
+size_t log_module_cap_g = 0;
 int log_file_fd_g;
 int log_seek_g;
 uint8_t log_level_g;
@@ -53,45 +67,45 @@ log_config_t log_config_g;
         sprintf((buffer), msg LOG_HEADER_VAL, ##__VA_ARGS__);\
     }while(0)
 
-#define PRINTF(msg, ...) \
+#define PRINTF(module_idx, msg, ...) \
     do {\
-        SPRINTF(log_internal_buffer_g, msg, ##__VA_ARGS__);\
+        SPRINTF(log_internal_buffer_g[module_idx], msg, ##__VA_ARGS__);\
         _log_flush();\
     }while(0) 
 
 #define LOG(msg, ...) \
     do{\
-        PRINTF(LOG_GREEN LOG_HEADER_FORMAT msg "\n", ##__VA_ARGS__);\
+        PRINTF(module_idx_g, LOG_GREEN LOG_HEADER_FORMAT msg "\n", ##__VA_ARGS__);\
     } while(0)
 
 #define LOG_CRIT(msg, ...) \
     do{\
-        PRINTF(LOG_RED LOG_HEADER_FORMAT msg "\n", ##__VA_ARGS__);\
+        PRINTF(module_idx_g, LOG_RED LOG_HEADER_FORMAT msg "\n", ##__VA_ARGS__);\
     } while(0)
 
 #define LOG_ERR(msg, ...) \
     do{\
-        PRINTF(LOG_YELLOW LOG_HEADER_FORMAT msg "\n", ##__VA_ARGS__);\
+        PRINTF(module_idx_g, LOG_YELLOW LOG_HEADER_FORMAT msg "\n", ##__VA_ARGS__);\
     } while(0)
 
 #define LOG_WARN(msg, ...) \
     do{\
-        PRINTF(LOG_BLUE LOG_HEADER_FORMAT msg "\n", ##__VA_ARGS__);\
+        PRINTF(module_idx_g, LOG_BLUE LOG_HEADER_FORMAT msg "\n", ##__VA_ARGS__);\
     } while(0)
 
 #define LOG_INFO(msg, ...) \
     do{\
-        PRINTF(LOG_GREEN LOG_HEADER_FORMAT msg "\n", ##__VA_ARGS__);\
+        PRINTF(module_idx_g, LOG_GREEN LOG_HEADER_FORMAT msg "\n", ##__VA_ARGS__);\
     } while(0)
 
 #define LOG_DBG(msg, ...) \
     do{\
-        PRINTF(LOG_MAGENTA LOG_HEADER_FORMAT msg "\n", ##__VA_ARGS__);\
+        PRINTF(module_idx_g, LOG_MAGENTA LOG_HEADER_FORMAT msg "\n", ##__VA_ARGS__);\
     } while(0)
 
 #define LOG_MEM(msg, ...) \
     do{\
-        PRINTF(LOG_CYAN LOG_HEADER_FORMAT msg "\n", ##__VA_ARGS__);\
+        PRINTF(module_idx_g, LOG_CYAN LOG_HEADER_FORMAT msg "\n", ##__VA_ARGS__);\
     } while(0)
 
 #define LOG_AT(l_type, msg, ...) \
@@ -99,25 +113,25 @@ log_config_t log_config_g;
         if (log_get_level()>=l_type) {\
             switch(l_type) {\
                 case L_CRIT:\
-                            PRINTF(LOG_RED LOG_HEADER_FORMAT msg "\n", ##__VA_ARGS__);\
+                            PRINTF(module_idx_g, LOG_RED LOG_HEADER_FORMAT msg "\n", ##__VA_ARGS__);\
                 break;\
                 case L_ERR:\
-                           PRINTF(LOG_YELLOW LOG_HEADER_FORMAT msg "\n", ##__VA_ARGS__);\
+                           PRINTF(module_idx_g, LOG_YELLOW LOG_HEADER_FORMAT msg "\n", ##__VA_ARGS__);\
                 break;\
                 case L_WARN:\
-                            PRINTF(LOG_BLUE LOG_HEADER_FORMAT msg "\n", ##__VA_ARGS__);\
+                            PRINTF(module_idx_g, LOG_BLUE LOG_HEADER_FORMAT msg "\n", ##__VA_ARGS__);\
                 break;\
                 case L_INFO:\
-                            PRINTF(LOG_GREEN LOG_HEADER_FORMAT msg "\n", ##__VA_ARGS__);\
+                            PRINTF(module_idx_g, LOG_GREEN LOG_HEADER_FORMAT msg "\n", ##__VA_ARGS__);\
                 break;\
                 case L_DBG:\
-                           PRINTF(LOG_MAGENTA LOG_HEADER_FORMAT msg "\n", ##__VA_ARGS__);\
+                           PRINTF(module_idx_g, LOG_MAGENTA LOG_HEADER_FORMAT msg "\n", ##__VA_ARGS__);\
                 break;\
                 case L_MEM:\
-                           PRINTF(LOG_CYAN LOG_HEADER_FORMAT msg "\n", ##__VA_ARGS__);\
+                           PRINTF(module_idx_g, LOG_CYAN LOG_HEADER_FORMAT msg "\n", ##__VA_ARGS__);\
                 break;\
                 default:\
-                        PRINTF(LOG_HEADER_FORMAT msg, ##__VA_ARGS__);\
+                        PRINTF(module_idx_g, LOG_HEADER_FORMAT msg, ##__VA_ARGS__);\
                 break;\
             }\
         }\
@@ -142,29 +156,63 @@ void log_open_fd(const char* filename) {
     log_seek_g = 0;
 }
 
-void log_init(log_config_t config) {
-    //bzero(&log_config_g, sizeof(log_config_t));
+int log_init(log_config_t config) {
+    if (log_initialized_g == 0) {
+        log_module_cap_g = 10;
+        log_internal_buffer_g = malloc(log_module_cap_g*sizeof(char*)); 
+        if (log_internal_buffer_g == NULL) {
+            perror("failed to initialized module buffers");
+        }
+        for (size_t i=0; i<log_module_cap_g; i++) {
+            log_internal_buffer_g[i] = malloc(MAX_BUFFER_SIZE*(sizeof(char)));
+            if (log_internal_buffer_g[i] == NULL) {
+                perror("failed to initialized module buffer");
+            }
+        }
+    }
+    log_module_len_g++;
+    if (log_module_len_g >= log_module_cap_g) {
+        log_internal_buffer_g = realloc(log_internal_buffer_g,
+                                        2*log_module_cap_g*sizeof(char*)); 
+        if (log_internal_buffer_g == NULL) {
+            perror("failed to initialized module buffers");
+        }
+        for (size_t i=log_module_cap_g; i<2*log_module_cap_g; i++) {
+            log_internal_buffer_g[i] = malloc(MAX_BUFFER_SIZE*(sizeof(char)));
+            if (log_internal_buffer_g[i] == NULL) {
+                perror("failed to initialized module buffer");
+            }
+        }
+        log_module_cap_g *= 2;
+    }
+
     memcpy(&log_config_g, &config, sizeof(log_config_t));
     if (log_config_g.filename != NULL) {
         log_open_fd(log_config_g.filename);
     }
+
+    return log_module_len_g-1;
 }
 
 void _log_flush() {
     if (log_config_g.log_to_console == 1) {
-        printf("%s", log_internal_buffer_g);
+        for (size_t i=0; i<log_module_len_g; i++) {
+            printf("%s", log_internal_buffer_g[i]);
+        }
     }
     if (log_file_fd_g > 0) {
         int seek = lseek(log_file_fd_g, 0, SEEK_END);
         if (seek == -1) {
             perror("error appending to log file.");
         }
-        int nr = write(log_file_fd_g,
-                       log_internal_buffer_g,
-                       strlen(log_internal_buffer_g));
-        if (nr == -1) {
-            perror("write error");
-        } 
+        for (size_t i=0; i<log_module_len_g; i++) {
+            int nr = write(log_file_fd_g,
+                           log_internal_buffer_g[i],
+                           strlen(log_internal_buffer_g[i]));
+            if (nr == -1) {
+                perror("write error");
+            } 
+        }
     }
 } 
 

@@ -33,4 +33,6 @@ size_t hash_len(hash_t *ht);
 
 size_t hash_cap(hash_t *ht);
 
+void hash_init();
+
 #endif

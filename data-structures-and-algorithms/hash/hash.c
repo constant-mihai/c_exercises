@@ -6,12 +6,9 @@
 
 #include "hash.h"
 
-#define LOG_ENABLE 1
+#include <log.h>
 
-#define LOG_INFO "[%s:%d]: "
-#define LOG_INFO_VAL __func__,__LINE__
-#define LOG(msg, ...) do { if (LOG_ENABLE == 1) printf(LOG_INFO msg "\n", LOG_INFO_VAL, ##__VA_ARGS__); } while (0)
-
+static int module_idx_g;
 
 hash_t *hash_create(int cap) {
     hash_t *ht = calloc(1, sizeof(hash_t));
@@ -157,6 +154,17 @@ size_t hash_len(hash_t *ht) {
 
 size_t hash_cap(hash_t *ht) {
     return ht->cap;
+}
+
+static int hash_initialized_g = 0;
+void hash_init() {
+    log_config_t log_config = {
+        .log_to_console = 1,
+        .filename = 0, // TODO test this
+    };
+    if (!hash_initialized_g) {
+        module_idx_g = log_init(log_config);
+    }
 }
 
 int main(int argc,  char **argv) {
