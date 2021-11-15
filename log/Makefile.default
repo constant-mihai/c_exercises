@@ -1,0 +1,86 @@
+######################################################################
+# Variables.
+# This is where all the variables are set 
+######################################################################
+include Makefile.var
+
+LAST_MAKEFILE := $(abspath $(lastword $(MAKEFILE_LIST)))
+SRC_DIR := $(patsubst %/,%,$(dir $(LAST_MAKEFILE))) 
+ROOT_PATH := $(patsubst %/,%,$(dir $(SRC_DIR)))
+
+#
+# GNU
+# -------------------------------------- #
+# -------------------------------------- #
+SHELL:= /bin/bash
+.RECIPEPREFIX := >
+
+#
+# Filetypes
+# -------------------------------------- #
+# -------------------------------------- #
+.SUFFIXES:
+.SUFFIXES: .c .C .cpp .o
+
+#
+# Shared library
+# -------------------------------------- #
+# -------------------------------------- #
+shl_name := $(name)
+shl_version := 1
+shl_release_number := 0
+shl_minor_number := 0
+shl_linker_name := lib$(shl_name).so
+shl_soname := $(shl_linker_name).$(shl_version)
+shl_fullname := $(shl_soname).$(shl_minor_number).$(shl_release_number)
+
+#
+# Compiler
+# -------------------------------------- #
+# -------------------------------------- #
+CC := gcc
+CXX := g++
+
+# source file extensions
+c_ext = c
+cpp_ext = cpp
+h_ext = h
+hpp_ext = hpp
+
+#
+# Headers
+# -------------------------------------- #
+# -------------------------------------- #
+h := $(wildcard *.h) $(call f_deep_includes_search,$(h_ext))
+hpp := $(wildcard *.hpp) $(call f_deep_includes_search,$(hpp_ext))
+
+incs := $(h) $(hpp)
+
+#
+# Sources
+# -------------------------------------- #
+# -------------------------------------- #
+c_srcs := $(wildcard *.c) $(call f_deep_source_search,$(c_ext))
+cpp_srcs := $(wildcard *.cpp) $(call f_deep_source_search,$(cpp_ext))
+
+srcs = $(c_srcs) $(cpp_srcs)
+
+#
+# Objects
+# -------------------------------------- #
+# -------------------------------------- #
+#cxx_objs := ${cxx_srcs:.C=.o}
+#cxx_objs += ${cpp_srcs:.cpp=.o}
+#c_objs := ${c_srcs:.c=.o}
+basenames := $(basename $(srcs))
+objs := $(addsuffix .o,$(basenames))
+objs_without_main := $(filter-out $(name).o,$(objs))
+deps = $(objs:.o=.d)
+
+#
+# Flags
+# -------------------------------------- #
+# -------------------------------------- #
+shared_flags := -shared -Wl,-soname,$(shl_soname)
+CCFLAGS += -Wall -fno-diagnostics-show-caret -Wextra -Wcast-align -Werror=return-type -g -O0 -Ddebug # -fPIC
+CPPFLAGS += -std=c++17 -Wall -O0 -fno-diagnostics-show-caret #-fPIC

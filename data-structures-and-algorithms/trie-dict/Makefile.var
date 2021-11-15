@@ -1,0 +1,27 @@
+#
+# General
+# -------------------------------------- #
+# -------------------------------------- #
+name := trie-dict
+main := yes
+
+#
+# Directories
+# -------------------------------------- #
+# -------------------------------------- #
+subdirs :=
+CURR_DIR := $(PWD)
+include_dirs := -I. \
+		   -I$(ROOT_PATH) \
+		   -I/usr/local/include/ \
+		   -I../../log/
+library_dirs := -L$(shell pwd)/../hash
+libraries := -lhash
+
+#
+# Compiler
+# -------------------------------------- #
+# -------------------------------------- #
+compiler := gcc
+
+LDFLAGS += -Wl,-rpath=$(shell pwd)/../hash
