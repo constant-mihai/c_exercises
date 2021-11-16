@@ -74,7 +74,7 @@ srcs = $(c_srcs) $(cpp_srcs)
 #c_objs := ${c_srcs:.c=.o}
 basenames := $(basename $(srcs))
 objs := $(addsuffix .o,$(basenames))
-objs_without_main := $(filter-out $(name).o,$(objs))
+#objs_without_main := $(filter-out $(name).o,$(objs))
 deps = $(objs:.o=.d)
 
 #
@@ -82,5 +82,5 @@ deps = $(objs:.o=.d)
 # -------------------------------------- #
 # -------------------------------------- #
 shared_flags := -shared -Wl,-soname,$(shl_soname)
-CCFLAGS += -Wall -fno-diagnostics-show-caret -Wextra -Wcast-align -Werror=return-type -g -O0 -Ddebug # -fPIC
+CCFLAGS += -Wall -fno-diagnostics-show-caret -Wextra -Wcast-align -Werror=return-type -g -O0 -Ddebug #-fPIC
 #CPPFLAGS += -std=c++17 -Wall -O0 -fno-diagnostics-show-caret #-fPIC

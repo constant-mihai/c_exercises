@@ -45,23 +45,24 @@
 #endif
 
 #define LOG_HEADER_FORMAT "[%s][%s]%s:%d "
-#define LOG_HEADER_VAL ,__TIME__,__FILE__,__func__,__LINE__
+#define LOG_HEADER_VAL __TIME__,__FILE__,__func__,__LINE__
 
 typedef struct {
     int log_to_console;
     const char *filename;
 }log_config_t;
 
-log_config_t log_config_g;
+void log_sprintf(int module_idx, const char *fmt, ...);
 
+// https://gcc.gnu.org/onlinedocs/cpp/Variadic-Macros.html
 #define SPRINTF(buffer, msg, ...)\
     do{\
-        sprintf((buffer), msg LOG_HEADER_VAL, ##__VA_ARGS__);\
+        sprintf((buffer), msg, LOG_HEADER_VAL, ##__VA_ARGS__);\
     }while(0)
 
 #define PRINTF(module_idx, msg, ...) \
     do {\
-        SPRINTF(log_internal_buffer_g[module_idx], msg, ##__VA_ARGS__);\
+        log_sprintf((module_idx), (msg), LOG_HEADER_VAL, ##__VA_ARGS__);\
         _log_flush();\
     }while(0) 
 

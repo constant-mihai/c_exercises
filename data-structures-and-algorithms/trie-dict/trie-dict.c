@@ -251,6 +251,7 @@ int main() {
         .filename = 0, // TODO test this
     };
     module_idx_g = log_init(log_config);
+    hash_init();
     LOG("main");
     test_search();
     //test_remove();

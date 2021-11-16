@@ -1,63 +1,108 @@
-# executable name and path
-BIN_NAME = hash
-BIN_PATH = ./ 
+######################################################################
+# Recipes.
+######################################################################
+include Makefile.default
+include Makefile.var
+include Makefile.fun
 
-CC ?= gcc
-CXX ?= g++
+#
+# Phony 
+# ----------------------------- #
+# ----------------------------- #
+.PHONY: all clean cleanall debug help
 
-# source file extensions
-C_EXT = c
-CPP_EXT = cpp
+#
+# Recipes
+#
 
-CCFLAGS = -pthread
-CXXFLAGS = -pthread
-LDFLAGS = -pthread
+# TODO there is another use case here
+# Where the user might want to make multiple
+# programs in one folder.
+# Current implementation requires each prog
+# has it's own folder.
+all: $(objs)
+>   @echo Making Main
+>   $(f_check_subdirs_for_libs)
+>   $(verbose)$(compile)
 
-LAST_MAKEFILE := $(abspath $(lastword $(MAKEFILE_LIST)))
-SRC_DIR := $(patsubst %/,%,$(dir $(LAST_MAKEFILE))) 
-ROOT_PATH := $(patsubst %/,%,$(dir $(SRC_DIR)))
+$(objs): $(srcs) $(incs)
+>   $(verbose)$(compiler) $(CCFLAGS) $(include_dirs) -c $(realpath $<) -o $@
 
-# include subdires
-INCLUDES = -I. \
-		   -I$(ROOT_PATH) \
-		   -I/usr/local/include/ \
-		   -I../../
 
-CC_COMPILE_FLAGS = -Wall -Wextra -Wcast-align -Werror=return-type -g -O0 -Ddebug -fPIC
-CXX_COMPILE_FLAGS = -std=c++17 -Wall -Wextra -Wcast-align -Werror=return-type -g -O0 -Ddebug
+# TODO there is another use case here
+# Where the user might want to make multiple
+# libraries in one folder.
+# Current implementation requires each library
+# has it's own folder.
+shared: $(objs)
+>   @echo Making Shared lib
+>   $(f_check_subdirs_for_libs)
+>   $(verbose)$(compile_shared_lib)
 
-# source files
-C_SOURCES = $(wildcard *.$(C_EXT)) 
-CPP_SOURCES = $(wildcard *.$(CPP_EXT))
-# object files
-OBJECTS = $(C_SOURCES:%.$(C_EXT)=%.o) $(CPP_SOURCES:%.$(CPP_EXT)=%.o)
-# dependency files
-DEPS = $(OBJECTS:.o=.d)
+clean:
+>   $(f_clean_main)
 
-.PHONY: default
-default: all;
+cleanall: 
+>   $(if $(findstring yes,$(recursive)),$(clean_subdirectories),)
+>   $(f_clean_main)
 
-.PHONY: all
-all: $(BIN_NAME)
+debug: CPPFLAGS += -g 
+debug: all 
 
-shl_linker_name := lib$(BIN_NAME).so
-shl_version := 1
-shl_release_number := 0
-shl_minor_number := 0
-shl_soname := $(shl_linker_name).$(shl_version)
-shared_flags := -shared -Wl,-soname,$(shl_soname)
-shl_fullname := $(shl_soname).$(shl_minor_number).$(shl_release_number)
+debug-shared: CPPFLAGS += -g
+debug-shared: shared
 
-$(OBJECTS): $(C_SOURCES)
-	$(VERBOSE)$(CC) $(CCFLAGS) $(CC_COMPILE_FLAGS) $(INCLUDES) -c $(realpath $<) -o $@
+help:
+>   @$(MAKE) --print-data-base --question all | \
+	grep -v -e '^no-such-target' -e '^makefile' |       \
+    awk '/^[^.%][-A-Za-z0-9_]*:/                        \
+          { print substr($$1, 1, length($$1)-1) }' |      \
+    sort 
 
-sharedlib: $(OBJECTS) $(DEFS_FILE)
-	$(VERBOSE)$(CC) $(shared_flags) $(OBJECTS) -o $(shl_fullname) $(LDFLAGS)
-	ln -sf $(shl_fullname) $(shl_soname)
-	ln -sf $(shl_fullname) $(shl_linker_name)
+# Alternatively:
+# awk '/^[^.%][-A-Za-z0-9_]*:/ { print }' |      \
 
-# Link the application
-$(BIN_NAME): $(OBJECTS) $(DEFS_FILE)
-	@echo "Linking: $@"
-	$(VERBOSE)$(CC) $(OBJECTS) $(LIBS) $(LDFLAGS) -o $@
+print-%: ; @echo $* = $($*)
 
+print-all: ;
+>    @echo ------------------------------ General
+>    @echo SHELL                = $(SHELL)
+>    @echo name                 = $(name) 
+>    @echo ------------------------------------------ Shared library
+>    @echo shl_name           = $(shl_name) 
+>    @echo shl_version        = $(shl_version)
+>    @echo shl_release_number = $(shl_release_number) 
+>    @echo shl_minor_number   = $(shl_minor_number)
+>    @echo shl_linker_name    = $(shl_linker_name)
+>    @echo shl_soname         = $(shl_soname)
+>    @echo shl_fullname       = $(shl_fullname)
+
+>    @echo ------------------------------------------ Directories  
+>    @echo subdirs              = $(subdirs) 
+>    @echo CURR_DIR             = $($CURR_DIR)
+>    @echo include_dirs = $(include_dirs) 
+>    @echo library_dirs = $(library_dirs)
+>    @echo libraries    = $(libraries)
+
+>    @echo ---------------------------- Compiler 
+>    @echo CC                   = $(CC) 
+>    @echo CXX                  = $(CXX) 
+>    @echo compiler             = $(compiler)
+
+>    @echo ---------------------------- Flags
+>    @echo shared               = $(shared)
+>    @echo CFLAGS               = $(CFLAGS)
+>    @echo CPPFLAGS             = $(CPPFLAGS)
+>    @echo LDFLAGS              = $(LDFLAGS)
+
+>    @echo ---------------------------- Sources 
+>    @echo c_srcs       = $(c_srcs)
+>    @echo c_srcs       = $(c_srcs)
+>    @echo cxx_srcs     = $(cxx_srcs)
+>    @echo ---------------------------- Objects 
+>    @echo cxx_objs     = $(cxx_objs)
+>    @echo c_objs       = $(c_objs)
+>    @echo ---------------------------- Headers 
+>    @echo h            = $(h)
+>    @echo hpp          = $(hpp)
+>    @echo cap_h        = $(cap_h)

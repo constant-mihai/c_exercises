@@ -1,5 +1,7 @@
 #include "log.h" 
+#include <stdarg.h>
 
+static log_config_t log_config_g;
 static char **log_internal_buffer_g;
 static int log_initialized_g = 0;
 static size_t log_module_len_g = 0;
@@ -75,7 +77,22 @@ void _log_flush() {
             } 
         }
     }
-} 
+}
+
+void log_sprintf(int module_idx, const char *fmt, ...) {
+    va_list args;
+    va_start(args, fmt);
+    // https://stackoverflow.com/questions/150543/forward-an-invocation-of-a-variadic-function-in-c
+    // also from "man printf":
+    // The functions vprintf(),  vfprintf(),  vdprintf(),  vsprintf(),	vsnprintf()  are
+    // equivalent   to	 the   functions   printf(),  fprintf(),  dprintf(),  sprintf(),
+    // snprintf(), respectively, except that they are called with a va_list instead of a
+    // variable number of arguments.  These functions do not call the va_end macro.  Be‐
+    // cause they invoke the va_arg macro, the value of ap is undefined after the  call.
+    // See stdarg(3).
+    vsprintf(log_internal_buffer_g[module_idx], fmt, args);
+    va_end(args);
+}
 
 void log_set_Level(uint8_t lvl) { log_level_g = lvl; };
 

@@ -47,10 +47,10 @@ compile_main = $(verbose)$(compiler) $(objs) $(LDFLAGS) $(library_dirs) $(librar
 # -------------------------------------- #
 # -------------------------------------- #
 # Compilation command for a shared lib. One liner:
-#compile_shared_lib = $(compiler) $(shared_flags) $(objs_without_main) -o $(shl_fullname) $(LDFLAGS); ln -sf $(shl_fullname) $(shl_soname); ln -sf $(shl_fullname) $(shl_linker_name)
+#compile_shared_lib = $(compiler) $(shared_flags) $(objs) -o $(shl_fullname) $(LDFLAGS); ln -sf $(shl_fullname) $(shl_soname); ln -sf $(shl_fullname) $(shl_linker_name)
 # Two liner, define:
 define compile_shared_lib
-$(verbose)$(compiler) $(shared_flags) $(objs_without_main) $(LDFLAGS) $(library_dirs) $(libraries) -o $(shl_fullname) $(LDFLAGS)
+$(verbose)$(compiler) $(shared_flags) $(objs) $(LDFLAGS) $(library_dirs) $(libraries) -o $(shl_fullname) $(LDFLAGS)
 ln -sf $(shl_fullname) $(shl_soname)
 ln -sf $(shl_fullname) $(shl_linker_name)
 endef

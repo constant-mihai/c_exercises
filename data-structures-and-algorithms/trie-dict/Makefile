@@ -23,7 +23,7 @@ include Makefile.fun
 all: $(objs)
 >   @echo Making Main
 >   $(f_check_subdirs_for_libs)
->   $(compile)
+>   $(verbose)$(compile)
 
 $(objs): $(srcs) $(incs)
 >   $(verbose)$(compiler) $(CCFLAGS) $(include_dirs) -c $(realpath $<) -o $@
@@ -37,7 +37,7 @@ $(objs): $(srcs) $(incs)
 shared: $(objs)
 >   @echo Making Shared lib
 >   $(f_check_subdirs_for_libs)
->   $(compile_shared_lib)
+>   $(verbose)$(compile_shared_lib)
 
 clean:
 >   $(f_clean_main)
