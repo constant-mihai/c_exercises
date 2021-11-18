@@ -33,7 +33,7 @@ void hash_destroy(hash_t *ht) {
     }
 
     for(size_t i=0; i<ht->cap; i++) {
-        printf("removing: %s", ht->entries[i].key);
+        LOG("removing: %s", ht->entries[i].key);
         free(ht->entries[i].key);
     }
 
@@ -57,7 +57,7 @@ size_t hash_get_index(hash_t *ht, const char* key) {
     return (size_t)(hash % (ht->cap -1 ));
 }
 
-int hash_set(hash_t *ht, const char *key, void *value) {
+int hash_set(hash_t *ht, const char *key, void *value, size_t value_len) {
     if (ht == NULL || key == NULL) {
         return -1;
     }
@@ -71,7 +71,7 @@ int hash_set(hash_t *ht, const char *key, void *value) {
     while (ht->entries[index].key != NULL) {
         if (strcmp(key, ht->entries[index].key) == 0) {
             LOG("Found key %s at index %ld", key, index);
-            ht->entries[index].value = value;
+            memcpy(ht->entries[index].value, value, value_len);
             goto done;
         }
         index++;
@@ -85,8 +85,8 @@ int hash_set(hash_t *ht, const char *key, void *value) {
     if (ht->entries[index].key == NULL) {
         return -1;
     }
-    ht->entries[index].value = value;
-
+    ht->entries[index].value = malloc(value_len);
+    memcpy(ht->entries[index].value, value, value_len);
 done:
     ht->len++;
     return 0;
@@ -110,6 +110,7 @@ int hash_find_or_del(hash_t *ht, const char *key, void **value, int del) {
                 index,
                 ht->entries[index].key);
             if (!del) {
+                //TODO deep copy here?
                 *value = ht->entries[index].value;
             } else {
                 free(ht->entries[index].value);
@@ -159,34 +160,81 @@ size_t hash_cap(hash_t *ht) {
 static int hash_initialized_g = 0;
 void hash_init() {
     log_config_t log_config = {
-        .log_to_console = 1,
+        .log_to_console = 0,
+        .level = L_CRIT,
         .filename = 0, // TODO test this
     };
     if (!hash_initialized_g) {
-        module_idx_g = log_init(log_config);
+        module_idx_g = log_add_module("hash", "hash", log_config);
     }
+}
+
+void hash_test_set() {
+    hash_t * ht = hash_create(100);
+    int a = 1;
+    int b = 2;
+    int err = 0;
+    err = hash_set(ht, "a", &a, sizeof(int));
+    assert(err == 0);
+    assert(ht->entries[hash_get_index(ht, "a")].key != NULL);
+    assert(!strcmp(ht->entries[hash_get_index(ht, "a")].key, "a"));
+
+    err = hash_set(ht, "b", &b, sizeof(int));
+    assert(ht->entries[hash_get_index(ht, "b")].key != NULL);
+    assert(!strcmp(ht->entries[hash_get_index(ht, "b")].key, "b"));
+    hash_destroy(ht);
+}
+
+void hash_test_get() {
+    hash_t * ht = hash_create(100);
+    int a = 1;
+    int b = 2;
+    int err = 0;
+    int *val = malloc(sizeof(int));
+    err = hash_set(ht, "a", &a, sizeof(int));
+    assert(err == 0);
+    err = hash_get(ht, "a", (void*)&val);
+    assert(err == 0);
+    assert(*val == 1);
+
+    err = hash_set(ht, "b", &b, sizeof(int));
+    assert(err == 0);
+    err = hash_get(ht, "b", (void*)&val);
+    assert(err == 0);
+    assert(*val == 2);
+}
+
+void hash_test_del() {
+    hash_t * ht = hash_create(100);
+    int a = 1;
+    int b = 2;
+    int err = 0;
+    int *val = malloc(sizeof(int));
+    err = hash_set(ht, "a", &a, sizeof(int));
+    assert(err == 0);
+    err = hash_get(ht, "a", (void*)&val);
+    assert(err == 0);
+    assert(*val == 1);
+    err = hash_del(ht, "a");
+    assert(err == 0);
+    err = hash_get(ht, "a", (void*)&val);
+    assert(err == 1);
+
+    err = hash_set(ht, "b", &b, sizeof(int));
+    assert(err == 0);
+    err = hash_del(ht, "b");
+    assert(err == 0);
+    err = hash_get(ht, "b", (void*)&val);
+    assert(err == 1);
+
 }
 
 int main(int argc,  char **argv) {
     (void)argc;
     (void)argv;
-    printf("main\n");
-
-    hash_t * ht = hash_create(100);
-    int a = 1;
-    int b = 2;
-    int err = 0;
-    err = hash_set(ht, "a", &a);
-    err = hash_set(ht, "b", &b);
-
-    int *pa = malloc(sizeof(int));
-    void **vpa = (void*)pa;
-    err = hash_get(ht, "a", vpa);
-
-    (void)err;
-
-    printf("a: %d\n", *(int*)(*vpa));
-
-    hash_destroy(ht);
+    hash_init();
+    hash_test_set();
+    hash_test_get();
+    hash_test_del();
     return 0;
 }

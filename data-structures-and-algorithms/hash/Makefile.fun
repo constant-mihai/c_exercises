@@ -56,15 +56,6 @@ ln -sf $(shl_fullname) $(shl_linker_name)
 endef
 
 #
-# Compile main
-# -------------------------------------- #
-# -------------------------------------- #
-# Test if this is the root directory of the project.
-# If it is then compile this as such.
-# It it is NOT then compile this as a lib.
-compile = $(if $(findstring yes,$(main)),$(compile_main),$(compile_shared_lib))
-
-#
 # Clean functions 
 # -------------------------------------- #
 # -------------------------------------- #

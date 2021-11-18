@@ -3,7 +3,6 @@
 # -------------------------------------- #
 # -------------------------------------- #
 name := hash
-main := no
 
 #
 # Directories
@@ -15,11 +14,14 @@ include_dirs := -I. \
 		   -I$(ROOT_PATH) \
 		   -I/usr/local/include/ \
 		   -I../../log/
-library_dirs :=
-libraries :=
+library_dirs := -L$(shell pwd)/../hash \
+				-L$(shell pwd)/../../log
+libraries := -llog
 
 #
 # Compiler
 # -------------------------------------- #
 # -------------------------------------- #
 compiler := gcc
+
+LDFLAGS += -Wl,-rpath=$(shell pwd)/../../log

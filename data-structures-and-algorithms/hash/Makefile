@@ -23,7 +23,7 @@ include Makefile.fun
 all: $(objs)
 >   @echo Making Main
 >   $(f_check_subdirs_for_libs)
->   $(verbose)$(compile)
+>   $(verbose)$(compile_main)
 
 $(objs): $(srcs) $(incs)
 >   $(verbose)$(compiler) $(CCFLAGS) $(include_dirs) -c $(realpath $<) -o $@
