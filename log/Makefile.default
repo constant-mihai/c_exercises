@@ -82,5 +82,5 @@ deps = $(objs:.o=.d)
 # -------------------------------------- #
 # -------------------------------------- #
 shared_flags := -shared -Wl,-soname,$(shl_soname)
-CCFLAGS += -Wall -fno-diagnostics-show-caret -Wextra -Wcast-align -Werror=return-type -g -O0 -Ddebug #-fPIC
+CCFLAGS += -Wall -fno-diagnostics-show-caret -Wextra -Wcast-align -Werror=return-type -g -O0 -Ddebug -fPIC
 CPPFLAGS += -std=c++17 -Wall -O0 -fno-diagnostics-show-caret #-fPIC

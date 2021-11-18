@@ -1,12 +1,5 @@
 #pragma once
-/* TODO While this works well enough, it can be done better.
- *  - Right now the global variables will be shared amongst all modules.
- *  - Compiling them is tricky:
- *    usr/bin/ld: hash.o: relocation R_X86_64_PC32 against symbol `log_file_fd_g' can not be used when making a shared object; recompile with -fPIC
- *
- * This could be made a library and the global variables hidden away.
- * It can then be loaded by each executable/shared library.
- *
+/* 
  * TODO it's not multithreading safe
  */
 
@@ -21,8 +14,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#define USE_COLORS              0
-#define MAX_BUFFER_SIZE 65535
+#define USE_COLORS 0
+#define MAX_BUFFER_SIZE 1024
 
 #if USE_COLORS
 #define LOG_RED     "\x1b[31m"
@@ -43,92 +36,34 @@
 #define LOG_RESET   "RESET:"
 
 #endif
+// Log level format
+#define LOG_LEVEL_FORMAT "<%s>"
+#define LOG_LEVEL_VALUE(level) log_get_level_string(level)
 
-#define LOG_HEADER_FORMAT "[%s][%s]%s:%d "
-#define LOG_HEADER_VAL __TIME__,__FILE__,__func__,__LINE__
+// timestamp format
+#define LOG_TIME_FORMAT "%d-%02d-%02dT%02d:%02d:%02d.%ldZ"
+#define LOG_TIME_VALUE(_tm, _ts) _tm.tm_year + 1900, _tm.tm_mon + 1, _tm.tm_mday, _tm.tm_hour, _tm.tm_min, _tm.tm_sec, _ts.tv_nsec / 4
 
-typedef struct {
-    int log_to_console;
-    const char *filename;
-}log_config_t;
+// Message format
+#define LOG_HOST_FORMAT "%s"
 
-void log_sprintf(int module_idx, const char *fmt, ...);
+// App name format
+#define LOG_APP_NAME_FORMAT "%s"
 
-// https://gcc.gnu.org/onlinedocs/cpp/Variadic-Macros.html
-#define SPRINTF(buffer, msg, ...)\
-    do{\
-        sprintf((buffer), msg, LOG_HEADER_VAL, ##__VA_ARGS__);\
-    }while(0)
+// Location format
+#define LOG_LOC_FORMAT "[%s():%s:%u]"
+#define LOG_LOC_VALUE(_func, _file, _line) _func, _file, _line
 
-#define PRINTF(module_idx, msg, ...) \
-    do {\
-        log_sprintf((module_idx), (msg), LOG_HEADER_VAL, ##__VA_ARGS__);\
-        _log_flush();\
-    }while(0) 
+// Message format
+#define LOG_THREAD_FORMAT "%s:"
 
-#define LOG(msg, ...) \
-    do{\
-        PRINTF(module_idx_g, LOG_GREEN LOG_HEADER_FORMAT msg "\n", ##__VA_ARGS__);\
-    } while(0)
+// Explicitly add a new line to the end of the logs.
+#define LOG_NEWLINE "\n"
 
-#define LOG_CRIT(msg, ...) \
-    do{\
-        PRINTF(module_idx_g, LOG_RED LOG_HEADER_FORMAT msg "\n", ##__VA_ARGS__);\
-    } while(0)
-
-#define LOG_ERR(msg, ...) \
-    do{\
-        PRINTF(module_idx_g, LOG_YELLOW LOG_HEADER_FORMAT msg "\n", ##__VA_ARGS__);\
-    } while(0)
-
-#define LOG_WARN(msg, ...) \
-    do{\
-        PRINTF(module_idx_g, LOG_BLUE LOG_HEADER_FORMAT msg "\n", ##__VA_ARGS__);\
-    } while(0)
-
-#define LOG_INFO(msg, ...) \
-    do{\
-        PRINTF(module_idx_g, LOG_GREEN LOG_HEADER_FORMAT msg "\n", ##__VA_ARGS__);\
-    } while(0)
-
-#define LOG_DBG(msg, ...) \
-    do{\
-        PRINTF(module_idx_g, LOG_MAGENTA LOG_HEADER_FORMAT msg "\n", ##__VA_ARGS__);\
-    } while(0)
-
-#define LOG_MEM(msg, ...) \
-    do{\
-        PRINTF(module_idx_g, LOG_CYAN LOG_HEADER_FORMAT msg "\n", ##__VA_ARGS__);\
-    } while(0)
-
-#define LOG_AT(l_type, msg, ...) \
-    do{\
-        if (log_get_level()>=l_type) {\
-            switch(l_type) {\
-                case L_CRIT:\
-                            PRINTF(module_idx_g, LOG_RED LOG_HEADER_FORMAT msg "\n", ##__VA_ARGS__);\
-                break;\
-                case L_ERR:\
-                           PRINTF(module_idx_g, LOG_YELLOW LOG_HEADER_FORMAT msg "\n", ##__VA_ARGS__);\
-                break;\
-                case L_WARN:\
-                            PRINTF(module_idx_g, LOG_BLUE LOG_HEADER_FORMAT msg "\n", ##__VA_ARGS__);\
-                break;\
-                case L_INFO:\
-                            PRINTF(module_idx_g, LOG_GREEN LOG_HEADER_FORMAT msg "\n", ##__VA_ARGS__);\
-                break;\
-                case L_DBG:\
-                           PRINTF(module_idx_g, LOG_MAGENTA LOG_HEADER_FORMAT msg "\n", ##__VA_ARGS__);\
-                break;\
-                case L_MEM:\
-                           PRINTF(module_idx_g, LOG_CYAN LOG_HEADER_FORMAT msg "\n", ##__VA_ARGS__);\
-                break;\
-                default:\
-                        PRINTF(module_idx_g, LOG_HEADER_FORMAT msg, ##__VA_ARGS__);\
-                break;\
-            }\
-        }\
-    }while(0)
+#define LOG_HEADER_FORMAT LOG_TIME_FORMAT " " LOG_HOST_FORMAT " " LOG_APP_NAME_FORMAT " " \
+                          LOG_LEVEL_FORMAT " " LOG_LOC_FORMAT " " LOG_THREAD_FORMAT " "
+#define LOG_HEADER_VAL LOG_TIME_VALUE(tm, ts), hostname_s, appname_s, \
+                       LOG_LEVEL_VALUE(level), LOG_LOC_VALUE(func, file, line), threadname_s
 
 typedef enum {
     L_DEFAULT = 0,
@@ -140,14 +75,75 @@ typedef enum {
     L_MEM     = 6,
 }LoggingLevels;
 
-void log_open_fd(const char* filename);
+typedef struct {
+    int log_to_console;
+    uint8_t level;
+    const char *filename;
+}log_config_t;
 
-int log_init(log_config_t config);
+void log_sprintf(int module_idx,
+                 int level,
+                 const char* func,
+                 const char* file,
+                 int line,
+                 const char *fmt, ...);
+
+// https://gcc.gnu.org/onlinedocs/cpp/Variadic-Macros.html
+#define PRINTF(module_idx, level, msg, ...) \
+    do {\
+        log_sprintf((module_idx), (level), __func__, __FILE__, __LINE__, msg , ##__VA_ARGS__);\
+        _log_flush(module_idx);\
+    }while(0) 
+
+#define LOG(msg, ...) \
+    do{\
+        PRINTF(module_idx_g, L_INFO, msg, ##__VA_ARGS__);\
+    } while(0)
+
+#define LOG_CRIT(msg, ...) \
+    do{\
+        PRINTF(module_idx_g, L_CRIT, msg, ##__VA_ARGS__);\
+    } while(0)
+
+#define LOG_ERR(msg, ...) \
+    do{\
+        PRINTF(module_idx_g, L_ERR, msg, ##__VA_ARGS__);\
+    } while(0)
+
+#define LOG_WARN(msg, ...) \
+    do{\
+        PRINTF(module_idx_g, L_WARN, msg, ##__VA_ARGS__);\
+    } while(0)
+
+#define LOG_INFO(msg, ...) \
+    do{\
+        PRINTF(module_idx_g, L_INFO, msg, ##__VA_ARGS__);\
+    } while(0)
+
+#define LOG_DBG(msg, ...) \
+    do{\
+        PRINTF(module_idx_g, L_DBG, msg, ##__VA_ARGS__);\
+    } while(0)
+
+#define LOG_MEM(msg, ...) \
+    do{\
+        PRINTF(module_idx_g, L_MEM, msg, ##__VA_ARGS__);\
+    } while(0)
+
+int log_open_fd(const char* filename);
+
+void log_init(const char* appname);
+
+void log_set_thread_name(const char* threadname);
+
+int log_add_module(const char* name, const char* appname, log_config_t config);
 
 void _log_flush();
 
-void log_set_Level(uint8_t lvl);
+void log_set_Level(int idx, uint8_t lvl);
 
 uint8_t log_get_level();
+
+const char* log_get_level_string(uint8_t level);
 
 void log_close();
