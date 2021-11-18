@@ -129,7 +129,7 @@ void log_sprintf(int module_idx,
                  int line,
                  const char *fmt, ...) {
     va_list args;
-    const char error[128];
+    char error[128];
 
     if (modules_s+module_idx == NULL || modules_s[module_idx].name == NULL) {
         sprintf(error, "logging module %d is not initialized.", module_idx);
