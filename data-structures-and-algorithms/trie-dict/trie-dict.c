@@ -245,12 +245,17 @@ void test_remove() {
     }
 }
 
+//TODO add tests here.
+// hash api was changed but something is broken in the makefiles and 
+// make didn't see the deps. This will mean that this will end up accessing
+// the function by it's old declaration (?!).
 int main() {
     log_config_t log_config = {
         .log_to_console = 1,
+        .level = L_DBG, 
         .filename = 0, // TODO test this
     };
-    module_idx_g = log_init(log_config);
+    module_idx_g = log_add_module("trie-dict", "trie-dict", log_config);
     hash_init();
     LOG("main");
     test_search();

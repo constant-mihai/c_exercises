@@ -7,18 +7,18 @@
 # Check subirs for libs 
 # -------------------------------------- #
 # -------------------------------------- #
-f_check_subdirs_for_libs = $(if $(submodules),$(compile_submodules),)
+f_check_submodules = $(if $(submodules),$(compile_submodules),)
 
 #
 # Compile subdirectories 
 # -------------------------------------- #
 # -------------------------------------- #
-define f_compile_subdir
-cd $(1); make; cd $(CURR_DIR); 
+define f_compile_submodule
+cd $(1); make shared; cd $(CURR_DIR); 
 endef
 
-compile_submodules= $(foreach dir,$(submodules),$(call f_compile_subdir,$(dir)))
-clean_subdirectories = $(foreach dir,$(submodules),$(call f_clean_subdir,$(dir)))
+compile_submodules= $(foreach dir,$(submodules),$(call f_compile_submodule,$(dir)))
+clean_submodules = $(foreach dir,$(submodules),$(call f_clean_submodule,$(dir)))
 
 #
 # User defines functions. 
@@ -36,6 +36,7 @@ clean_subdirectories = $(foreach dir,$(submodules),$(call f_clean_subdir,$(dir))
 #  - C
 f_deep_source_search = $(foreach dir,$(subdirs),$(wildcard $(dir)/*.$(1)))
 f_deep_includes_search = $(foreach dir,$(include_dirs),$(wildcard $(dir)/*.$(1)))
+f_deep_submodule_search = $(foreach dir,$(submodules),$(wildcard $(dir)/*.$(1)))
 
 verbose = $(if $(or $(findstring yes,$(v)),$(findstring 1, $(v))),,@)
 
@@ -76,7 +77,7 @@ define f_clean_main
 $(f_clean) if [ -a $(name) ]; then rm $(name); fi;
 endef
 
-define f_clean_subdir
+define f_clean_submodule
 cd $(1); $(f_clean) cd $(CURR_DIR);
 endef
 

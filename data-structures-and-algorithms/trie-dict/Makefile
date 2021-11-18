@@ -22,10 +22,11 @@ include Makefile.fun
 # has it's own folder.
 all: $(objs)
 >   @echo Making Main
->   $(f_check_subdirs_for_libs)
+>   $(f_check_submodules)
 >   $(verbose)$(compile)
 
-$(objs): $(srcs) $(incs)
+# TODO this doesn't work. it should rebuild the objs
+$(objs): $(srcs) $(incs) $(libs)
 >   $(verbose)$(compiler) $(CCFLAGS) $(include_dirs) -c $(realpath $<) -o $@
 
 
@@ -36,14 +37,14 @@ $(objs): $(srcs) $(incs)
 # has it's own folder.
 shared: $(objs)
 >   @echo Making Shared lib
->   $(f_check_subdirs_for_libs)
+>   $(f_check_submodules)
 >   $(verbose)$(compile_shared_lib)
 
 clean:
 >   $(f_clean_main)
 
 cleanall: 
->   $(if $(findstring yes,$(recursive)),$(clean_subdirectories),)
+>   $(if $(findstring yes,$(recursive)),$(clean_submodules),)
 >   $(f_clean_main)
 
 debug: CPPFLAGS += -g 

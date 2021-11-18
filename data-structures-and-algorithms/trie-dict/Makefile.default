@@ -66,6 +66,12 @@ cpp_srcs := $(wildcard *.cpp) $(call f_deep_source_search,$(cpp_ext))
 srcs = $(c_srcs) $(cpp_srcs)
 
 #
+# Sources
+# -------------------------------------- #
+# -------------------------------------- #
+libs := $(call f_deep_submodule_search,so)
+
+#
 # Objects
 # -------------------------------------- #
 # -------------------------------------- #

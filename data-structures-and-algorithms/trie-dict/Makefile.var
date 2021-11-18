@@ -10,7 +10,8 @@ main := yes
 # -------------------------------------- #
 # -------------------------------------- #
 subdirs :=
-submodules := 
+submodules :=  ../../log \
+	           ../hash
 CURR_DIR := $(PWD)
 include_dirs := -I. \
 		   -I$(ROOT_PATH) \
