@@ -1,15 +1,60 @@
 ######################################################################
 # Recipes.
 ######################################################################
-include Makefile.default
+include Makefile.in
 include Makefile.var
-include Makefile.fun
 
 #
 # Phony 
 # ----------------------------- #
 # ----------------------------- #
 .PHONY: all clean cleanall debug help
+
+verbose = $(if $(or $(findstring yes,$(v)),$(findstring 1, $(v))),,@)
+
+#
+# Compile subdirectories 
+# -------------------------------------- #
+# -------------------------------------- #
+define f_compile_subdir
+cd $(1); make v=$(v) $(2); cd $(CURR_DIR); 
+endef
+
+compile_submodules = $(foreach mod,$(submodules),$(call f_compile_subdir,$(mod),shared))
+compile_subdir = $(foreach dir,$(subdirs),$(call f_compile_subdir,$(dir),all))
+clean_subdirectories = $(foreach dir,$(submodules),$(call f_clean_subdir,$(dir)))
+
+# Compilation command for the main program.
+compile_main = $(compiler) $(objs) $(LDFLAGS) $(library_dirs) $(libraries) -o $(name)
+
+#
+# Compile shared libs
+# -------------------------------------- #
+# -------------------------------------- #
+# Compilation command for a shared lib. One liner:
+#compile_shared_lib = $(compiler) $(shared_flags) $(objs) -o $(shl_fullname) $(LDFLAGS); ln -sf $(shl_fullname) $(shl_soname); ln -sf $(shl_fullname) $(shl_linker_name)
+# Two liner, define:
+define compile_shared_lib
+$(compiler) $(shared_flags) $(objs) $(LDFLAGS) $(library_dirs) $(libraries) -o $(shl_fullname)
+ln -sf $(shl_fullname) $(shl_soname)
+ln -sf $(shl_fullname) $(shl_linker_name)
+endef
+
+#
+# Clean functions 
+# -------------------------------------- #
+# -------------------------------------- #
+define f_clean
+rm -f *.o; rm -f *.so*;
+endef
+
+define f_clean_main
+$(f_clean) if [ -a $(name) ]; then rm $(name); fi;
+endef
+
+define f_clean_subdir
+cd $(1); $(f_clean) cd $(CURR_DIR);
+endef
 
 #
 # Recipes
@@ -22,10 +67,11 @@ include Makefile.fun
 # has it's own folder.
 all: $(objs)
 >   @echo Making Main
->   $(f_check_subdirs_for_libs)
+>   $(compile_submodules)
 >   $(verbose)$(compile_main)
 
 $(objs): $(srcs) $(incs)
+>   $(compile_subdir)
 >   $(verbose)$(compiler) $(CCFLAGS) $(include_dirs) -c $(realpath $<) -o $@
 
 
@@ -36,7 +82,7 @@ $(objs): $(srcs) $(incs)
 # has it's own folder.
 shared: $(objs)
 >   @echo Making Shared lib
->   $(f_check_subdirs_for_libs)
+>   $(compile_submodules)
 >   $(verbose)$(compile_shared_lib)
 
 clean:

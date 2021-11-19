@@ -155,7 +155,12 @@ void log_sprintf(int module_idx,
     // cause they invoke the va_arg macro, the value of ap is undefined after the  call.
     // See stdarg(3).
     pos += vsnprintf(modules_s[module_idx].buffer+pos, MAX_BUFFER_SIZE, fmt, args);
+    if (pos >= MAX_BUFFER_SIZE) {
+        modules_s[module_idx].buffer[pos-1] = '\n';
+        modules_s[module_idx].buffer[pos] = '\0';
+    }
     modules_s[module_idx].buffer[pos] = '\n';
+    modules_s[module_idx].buffer[pos+1] = '\0';
 
     va_end(args);
 }

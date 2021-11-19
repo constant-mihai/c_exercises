@@ -5,18 +5,43 @@
 name := hash
 
 #
+# Shared library
+# -------------------------------------- #
+# -------------------------------------- #
+shl_name := $(name)
+shl_version := 1
+shl_release_number := 0
+shl_minor_number := 0
+shl_linker_name := lib$(shl_name).so
+shl_soname := $(shl_linker_name).$(shl_version)
+shl_fullname := $(shl_soname).$(shl_minor_number).$(shl_release_number)
+
+#
+# Compiler
+# -------------------------------------- #
+# -------------------------------------- #
+CC := gcc
+CXX := g++
+
+# source file extensions
+c_ext = c
+cpp_ext = cpp
+h_ext = h
+hpp_ext = hpp
+
+#
 # Directories
 # -------------------------------------- #
 # -------------------------------------- #
-subdirs := 
+subdirs := ../../log
 CURR_DIR := $(PWD)
 include_dirs := -I. \
 		   -I$(ROOT_PATH) \
 		   -I/usr/local/include/ \
 		   -I../../log/
-library_dirs := -L$(shell pwd)/../hash \
-				-L$(shell pwd)/../../log
-libraries := -llog
+#library_dirs := -L$(shell pwd)/../hash \
+#				-L$(shell pwd)/../../log
+#libraries := -llog
 
 #
 # Compiler
@@ -25,3 +50,11 @@ libraries := -llog
 compiler := gcc
 
 LDFLAGS += -Wl,-rpath=$(shell pwd)/../../log
+
+#
+# Flags
+# -------------------------------------- #
+# -------------------------------------- #
+shared_flags := -shared -Wl,-soname,$(shl_soname)
+CCFLAGS += -Wall -fno-diagnostics-show-caret -Wextra -Wcast-align -Werror=return-type -g -O0 -Ddebug #-fPIC
+CPPFLAGS += -std=c++17 -Wall -O0 -fno-diagnostics-show-caret #-fPIC

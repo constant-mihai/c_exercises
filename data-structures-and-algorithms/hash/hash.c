@@ -33,8 +33,10 @@ void hash_destroy(hash_t *ht) {
     }
 
     for(size_t i=0; i<ht->cap; i++) {
-        LOG("removing: %s", ht->entries[i].key);
-        free(ht->entries[i].key);
+        if (ht->entries[i].key != NULL) {
+            LOG("removing: %s", ht->entries[i].key);
+            free(ht->entries[i].key);
+        }
     }
 
     free(ht->entries);
@@ -160,7 +162,7 @@ size_t hash_cap(hash_t *ht) {
 static int hash_initialized_g = 0;
 void hash_init() {
     log_config_t log_config = {
-        .log_to_console = 0,
+        .log_to_console = 1,
         .level = L_CRIT,
         .filename = 0, // TODO test this
     };
