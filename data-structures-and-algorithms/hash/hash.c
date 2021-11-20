@@ -5,8 +5,7 @@
 #include <assert.h>
 
 #include "hash.h"
-
-#include <log.h>
+#include "log/log.h"
 
 static int module_idx_g;
 
@@ -167,12 +166,14 @@ void hash_init() {
         .filename = 0, // TODO test this
     };
     if (!hash_initialized_g) {
+        // don't initialize twice
         module_idx_g = log_add_module("hash", "hash", log_config);
     }
 }
 
 void hash_test_set() {
     hash_t * ht = hash_create(100);
+
     int a = 1;
     int b = 2;
     int err = 0;
@@ -229,14 +230,4 @@ void hash_test_del() {
     err = hash_get(ht, "b", (void*)&val);
     assert(err == 1);
 
-}
-
-int main(int argc,  char **argv) {
-    (void)argc;
-    (void)argv;
-    hash_init();
-    hash_test_set();
-    hash_test_get();
-    hash_test_del();
-    return 0;
 }

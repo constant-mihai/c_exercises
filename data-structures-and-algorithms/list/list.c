@@ -55,20 +55,20 @@ void list_foreach(node_t *n, print_node_fn pn) {
     }
 }
 
-int main(int argc, char ** argv) {
-    LOG("main");
-    list *l = list_create();
-    l->head = (node_t*)calloc(1, sizeof(node_t));
-    l->head->value = 10;
-    l->tail = l->head;
+/* int main(int argc, char ** argv) {*/
+/*     LOG("main");*/
+/*     list *l = list_create();*/
+/*     l->head = (node_t*)calloc(1, sizeof(node_t));*/
+/*     l->head->value = 10;*/
+/*     l->tail = l->head;*/
 
-    int err = list_insert(l->head, 11);
-    if (err != 0) {
-        LOG("error inserting");
-        return -1;
-    }
+/*     int err = list_insert(l->head, 11);*/
+/*     if (err != 0) {*/
+/*         LOG("error inserting");*/
+/*         return -1;*/
+/*     }*/
 
-    list_foreach(l->head, print_node);
+/*     list_foreach(l->head, print_node);*/
 
-    return 0;
-}
+/*     return 0;*/
+/* }*/

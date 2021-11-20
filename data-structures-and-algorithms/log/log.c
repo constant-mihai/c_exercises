@@ -36,8 +36,9 @@ void log_set_thread_name(const char* threadname) {
 
 void log_init(const char* appname) {
     if (initialized_s == 0) {
+        // don't initialized twice
         hostname_s = malloc(HOST_NAME_MAX*sizeof(char));
-        gethostname(hostname_s, HOST_NAME_MAX + 1);
+        gethostname(hostname_s, HOST_NAME_MAX);
         appname_s = malloc((strlen(appname)+1)*sizeof(char));
         strcpy(appname_s, appname);
         threadname_s = malloc((strlen("main")+1)*sizeof(char));

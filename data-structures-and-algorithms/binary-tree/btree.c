@@ -153,14 +153,17 @@ int btree_remove(node_t *n, int val) {
     return ret;
 }
 
+// TODO
 int btree_find(node_t *n, int val) {
+    (void) n;
+    (void) val;
 
     return 0;
 }
 
 int btree_dump(node_t *n);
 
-void test_insert() {
+void btree_test_insert() {
     node_t *root = NULL;
     LOG("Insert root");
     assert(btree_insert(&root, NULL, 4) == 0);
@@ -184,7 +187,7 @@ void test_insert() {
     assert(root->right->val == 5);
 }
 
-void test_successor() {
+void btree__test_successor() {
     node_t *root = NULL;
     assert(btree_insert(&root, NULL, 4) == 0);
     assert(btree_insert(&root, NULL, 1) == 0);
@@ -197,7 +200,7 @@ void test_successor() {
     assert(suc->val == 5);
 }
 
-void test_remove() {
+void btree_test_remove() {
     node_t *root = NULL;
     assert(btree_insert(&root, NULL, 4) == 0);
     assert(btree_insert(&root, NULL, 1) == 0);
@@ -218,16 +221,16 @@ void test_remove() {
     assert(root->right->val == 11);
 }
 
-int main(int argc, char ** argv) {
-    LOG("main");
-    test_insert();
-    test_successor();
-    test_remove();
+/* int main(int argc, char ** argv) {*/
+/*     LOG("main");*/
+/*     btree_insert();*/
+/*     btree_successor();*/
+/*     btree_remove();*/
 
-    const char* str1 = "abc";
-    const char* str2 = "abd";
+/*     const char* str1 = "abc";*/
+/*     const char* str2 = "abd";*/
 
-    LOG("cmp: %d", strcmp(str1, str2));
+/*     LOG("cmp: %d", strcmp(str1, str2));*/
 
-    return 0;
-}
+/*     return 0;*/
+/* }*/

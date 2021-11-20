@@ -1,4 +1,5 @@
-include ../Makefile.subdir
+include ../../Makefile.in
+include ../Makefile
 
 # Add any additional compile flag here
 CCFLAGS +=

@@ -66,7 +66,7 @@ int trie_search_or_remove(node_t *trie,
     return (strlen(ip) == (*i)) ? 1 : 0;
 }
 
-void test_search() {
+void trie_test_search() {
     node_t trie;
     memset(trie.kv, 0, 10*sizeof(kv_t));
 
@@ -77,7 +77,7 @@ void test_search() {
     assert(trie_search_or_remove(&trie, ip1, SEARCH, &i) == 1);
 }
 
-void test_remove() {
+void trie_test_remove() {
     node_t trie;
     memset(trie.kv, 0, 10*sizeof(kv_t));
 
@@ -90,7 +90,7 @@ void test_remove() {
     assert(trie_search_or_remove(&trie, ip1, SEARCH, &i) == 0);
 }
 
-void test_insert() {
+void trie_test_insert() {
     node_t trie;
     memset(trie.kv, 0, 10*sizeof(kv_t));
 
@@ -107,11 +107,11 @@ void test_insert() {
     assert(trie.kv[1].child->kv[9].child->kv[2].child->kv[1].child != NULL);
 }
 
-int main() {
-    LOG("main");
-    test_insert();
-    test_search();
-    test_remove();
+/* int main() {*/
+/*     LOG("main");*/
+/*     trie_testinsert();*/
+/*     trie_testsearch();*/
+/*     trie_testremove();*/
 
-    return 0;
-}
+/*     return 0;*/
+/* }*/

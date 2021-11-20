@@ -9,8 +9,8 @@
 #define LOG(msg, ...) printf(LOG_INFO msg "\n", LOG_INFO_VAL, ##__VA_ARGS__)
 
 typedef struct {
-    int32_t *array;
-    int last;
+    uint32_t *array;
+    size_t last;
     size_t cap;
 } heap_t;
 
@@ -86,6 +86,8 @@ int heap_insert(heap_t *heap, int val) {
     heap->cap--;
 
     _heap_float(heap);
+
+    return 0;
 }
 
 int heap_pop(heap_t *heap) {
@@ -106,7 +108,7 @@ int heap_pop(heap_t *heap) {
 
 #define HEAP_SIZE 100
 
-void test_insert() {
+void heap_test_insert() {
     heap_t heap = {
         .array = (uint32_t*)calloc(HEAP_SIZE, sizeof(uint32_t)),
         .last = -1,
@@ -128,7 +130,7 @@ void test_insert() {
     }
 }
 
-void test_remove() {
+void heap_test_remove() {
     heap_t heap = {
         .array = (uint32_t*)calloc(HEAP_SIZE, sizeof(uint32_t)),
         .last = -1,
@@ -171,9 +173,11 @@ void test_remove() {
 }
 
 int main(int argc, char ** argv) {
+    (void) argc;
+    (void) argv;
     LOG("main");
-    //test_insert();
-    test_remove();
+    //heap_test_insert();
+    heap_test_remove();
 
     return 0;
 }

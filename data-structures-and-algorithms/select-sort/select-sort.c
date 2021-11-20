@@ -8,7 +8,7 @@
 #define LOG_INFO_VAL __func__,__LINE__
 #define LOG(msg, ...) printf(LOG_INFO msg "\n", LOG_INFO_VAL, ##__VA_ARGS__)
 
-int main(int argc, char ** argv) {
+int select_sort() {
     int ta[5] = {5, 0, 4, 3, 2};
     int ta_len = sizeof(ta)/sizeof(ta[0]);
     int *least = 0;

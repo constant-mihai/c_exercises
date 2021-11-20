@@ -130,6 +130,16 @@ void log_sprintf(int module_idx,
         PRINTF(module_idx_g, L_MEM, msg, ##__VA_ARGS__);\
     } while(0)
 
+#define LOG_ADD_DEFAULT_MODULE(module_name, appname, loglvl) \
+    do { \
+        log_config_t log_config = { \
+            .log_to_console = 1, \
+            .level = loglvl, \
+            .filename = NULL \
+        }; \
+        module_idx_g = log_add_module(module_name, appname, log_config); \
+    } while(0)
+
 int log_open_fd(const char* filename);
 
 void log_init(const char* appname);
@@ -138,7 +148,7 @@ void log_set_thread_name(const char* threadname);
 
 int log_add_module(const char* name, const char* appname, log_config_t config);
 
-void _log_flush();
+void _log_flush(size_t idx);
 
 void log_set_Level(int idx, uint8_t lvl);
 

@@ -1,0 +1,32 @@
+#
+# Implicit variables 
+# -------------------------------------- #
+# -------------------------------------- #
+CCFLAGS += -Wall -fno-diagnostics-show-caret -Wextra -Wcast-align -Werror=return-type -g -O0 -Ddebug #-fPIC
+CPPFLAGS += -Wall -fno-diagnostics-show-caret -Wextra -Wcast-align -Werror=return-type -g -O0 -Ddebug -std=c++17 #-fPIC
+
+LDFLAGS += -Wl,-rpath=$(shell pwd)/../../log
+TEST_LDFLAGS += $(LDFLAGS)
+
+SHELL:= /bin/bash
+#.RECIPEPREFIX := >
+CURR_DIR := $(PWD)
+
+subdirs :=
+test_subdirs :=
+
+# TODO extend here with the subdirs list?
+# This would allow one to simple include "include.h".c:w
+include_dirs := $(SRC_DIR) \
+					 $(SRC_DIR).. \
+					 $(SRC_DIR)/test \
+					 /usr/local/include/gmock \
+					 /usr/local/include/gtest \
+		             /usr/local/include/ \
+
+INCLUDES := $(foreach dir,$(include_dirs),-I$(dir))
+
+dependency_files = -MP -MMD
+
+tested_path := ${CURDIR}/..
+tested_objs := $(wildcard $(tested_path)/*/*.o)
