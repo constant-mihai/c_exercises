@@ -6,16 +6,17 @@ CCFLAGS += -Wall -fno-diagnostics-show-caret -Wextra -Wcast-align -Werror=return
 CPPFLAGS += -Wall -fno-diagnostics-show-caret -Wextra -Wcast-align -Werror=return-type -g -O0 -Ddebug -std=c++17 #-fPIC
 
 LAST_MAKEFILE := $(abspath $(lastword $(MAKEFILE_LIST)))
-SRC_DIR := $(patsubst %/,%,$(dir $(LAST_MAKEFILE))) 
+SRC_DIR := $(patsubst %/,%,$(dir $(LAST_MAKEFILE)))
 ROOT_PATH := $(patsubst %/,%,$(dir $(SRC_DIR)))
 
 CC := gcc
 CXX := g++
+
+LDFLAGS =
 #LDFLAGS += -Wl,-rpath=$(shell pwd)/log # this is needed if modules are imported by relative path
 TEST_LDFLAGS += $(LDFLAGS)
 
 SHELL:= /bin/bash
-#.RECIPEPREFIX := >
 CURR_DIR := $(PWD)
 
 subdirs := binary-tree hash heap list log select-sort trie trie-dict
@@ -44,7 +45,7 @@ TEST_INCLUDES := $(foreach dir,$(test_include_dirs),-I$(dir))
 #libraries := log
 #LIBRARIES := $(foreach lib,$(libraries),-l$(dir))
 
-test_libraries := gtest_main
+test_libraries := gtest_main gtest
 TEST_LIBRARIES := $(foreach lib,$(test_libraries),-l$(lib))
 
 dependency_files = -MP -MMD

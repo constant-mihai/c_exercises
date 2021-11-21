@@ -2,20 +2,8 @@
 #include <stdio.h>
 #include <stdint.h>
 
-#define LOG_INFO "[%s:%d]: "
-#define LOG_INFO_VAL __func__,__LINE__
-#define LOG(msg, ...) printf(LOG_INFO msg "\n", LOG_INFO_VAL, ##__VA_ARGS__)
-
-typedef struct node {
-    int value;
-    struct node *next;
-    struct node *prev;
-} node_t;
-
-typedef struct {
-    node_t *head;
-    node_t *tail;
-} list;
+#include "list/list.h"
+#include "log/log.h"
 
 list *list_create() {
     list *l = (list*)malloc(sizeof(list));
@@ -39,9 +27,12 @@ int list_insert(node_t *prev, int value) {
     return 0;
 }
 
-int list_remove(node_t *n, int value);
+int list_remove(node_t *n, int value) {
+    (void) n;
+    (void) value;
 
-typedef void (*print_node_fn)(int);
+    return 0;
+}
 
 void print_node(int value) {
     LOG("value: %d", value);
@@ -54,21 +45,3 @@ void list_foreach(node_t *n, print_node_fn pn) {
         n = n->next;
     }
 }
-
-/* int main(int argc, char ** argv) {*/
-/*     LOG("main");*/
-/*     list *l = list_create();*/
-/*     l->head = (node_t*)calloc(1, sizeof(node_t));*/
-/*     l->head->value = 10;*/
-/*     l->tail = l->head;*/
-
-/*     int err = list_insert(l->head, 11);*/
-/*     if (err != 0) {*/
-/*         LOG("error inserting");*/
-/*         return -1;*/
-/*     }*/
-
-/*     list_foreach(l->head, print_node);*/
-
-/*     return 0;*/
-/* }*/

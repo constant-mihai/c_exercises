@@ -1,13 +1,22 @@
 #include <gtest/gtest.h>
 
+extern "C" {
+
 #include "binary-tree/btree.h"
 #include "log/log.h"
+}
 
-int module_idx_g = 0;
+class TestBinaryTree: public ::testing::Test {
+    protected:
+        void SetUp() override {
+            LOG_ADD_DEFAULT_MODULE("btree-tests", L_INFO);
+        }
 
-// Demonstrate some basic assertions.
-TEST(TestBinaryTree, TestInsert) {
-    LOG_ADD_DEFAULT_MODULE("btree-tests", "unit-tests", L_INFO);
+        // void TearDown() override {}
+        int module_idx_g = 0;
+};
+
+TEST_F(TestBinaryTree, TestInsert) {
     node_t *root = NULL;
     LOG("Insert root");
     assert(btree_insert(&root, NULL, 4) == 0);
@@ -29,4 +38,38 @@ TEST(TestBinaryTree, TestInsert) {
     LOG("Assert right");
     assert(root->right->up == root);
     assert(root->right->val == 5);
+}
+
+TEST_F(TestBinaryTree, TestSuccessor) {
+    node_t *root = NULL;
+    assert(btree_insert(&root, NULL, 4) == 0);
+    assert(btree_insert(&root, NULL, 1) == 0);
+    assert(btree_insert(&root, NULL, 10) == 0);
+    assert(btree_insert(&root, NULL, 11) == 0);
+    assert(btree_insert(&root, NULL, 5) == 0);
+
+    node_t *suc = btree_get_successor_node(root);
+    assert(suc != NULL);
+    assert(suc->val == 5);
+}
+
+TEST_F(TestBinaryTree, TestRemove) {
+    node_t *root = NULL;
+    assert(btree_insert(&root, NULL, 4) == 0);
+    assert(btree_insert(&root, NULL, 1) == 0);
+    assert(btree_insert(&root, NULL, 10) == 0);
+    assert(btree_insert(&root, NULL, 11) == 0);
+    assert(btree_insert(&root, NULL, 5) == 0);
+
+    assert(btree_remove(root, 1) == 0);
+    assert(root->left == NULL);
+    assert(btree_remove(root, 1) == 1);
+
+    assert(btree_remove(root, 10) == 0);
+    assert(root->right != NULL);
+    assert(root->right->val == 11);
+
+    assert(btree_remove(root, 10) == 1);
+    assert(root->right != NULL);
+    assert(root->right->val == 11);
 }

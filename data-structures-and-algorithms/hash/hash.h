@@ -19,6 +19,8 @@ void hash_destroy(hash_t *ht);
 // https://stackoverflow.com/questions/7666509/hash-function-for-string 
 uint64_t hash_function(const char *key);
 
+size_t hash_get_index(hash_t *ht, const char* key);
+
 int hash_set(hash_t *ht, const char *key, void *value, size_t value_len);
 
 int hash_get(hash_t *ht, const char *key, void **value);

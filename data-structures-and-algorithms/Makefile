@@ -7,7 +7,7 @@ include Makefile.in
 # Phony 
 # ----------------------------- #
 # ----------------------------- #
-.PHONY: all clean cleanall debug help clean-subdirs
+.PHONY: all subdirs test-subdirs clean cleanall debug help clean-subdirs
 
 verbose = $(if $(or $(findstring yes,$(v)),$(findstring 1, $(v))),,@)
 
@@ -51,6 +51,7 @@ all: subdirs $(objs) # TODO library prerequisite
 	$(verbose)$(CC) $(objs) $(LDFLAGS) $(LIBRARY_DIRS) $(LIBRARIES) -o $(name)
 
 subdirs:
+	@echo Compiling application objects.
 	$(verbose)for s in $(subdirs) ; do \
 		echo "cd $$s/" ; \
 		$(MAKE) $(PARALLEL) --no-print-directory -C $$s ; \
@@ -66,22 +67,20 @@ subdirs:
 	@echo "    $< -> $@"
 	$(verbose)$(CC) $(dependency_files) $(CCFLAGS) $(optimize_flags) $(defines) $(INCLUDES) -c $(realpath $<) -o $@
 
-shared: subdirs local # TODO library prerequisite
+shared: subdirs # TODO library prerequisite
 	@echo Linking shared lib.
 	$(verbose)$(compile_shared_lib_fn)
 
-test: subdirs $(objs) $(test_objs)
+test: subdirs test-subdirs $(objs)
 	@echo Linking test executable.
-	$(verbose)$(CXX) $(objs) $(test_objs) $(TEST_LDFLAGS) $(TEST_LIBRARY_DIRS) $(TEST_LIBRARIES) -o $(name)_test
-	./$(name)_test unit
+	$(verbose)$(CXX) -Wl,--start-group $(objs) $(test_objs) $(TEST_LDFLAGS) $(TEST_LIBRARY_DIRS) $(TEST_LIBRARIES) -Wl,--end-group -o $(name)_test
 
-$(test_objs):
+test-subdirs: $(test_srcs) $(test_incs)
 	@echo Compiling test objects.
 	$(verbose)for s in $(test_subdirs) ; do \
 		echo "cd $$s/" ; \
 		$(MAKE) $(PARALLEL) --no-print-directory -C $$s ; \
 	done;
-
 
 clean: clean-subdirs
 	rm -f *.o; rm -f *.so*;

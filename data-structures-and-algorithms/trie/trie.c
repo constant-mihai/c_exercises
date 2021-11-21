@@ -4,17 +4,8 @@
 #include <assert.h>
 #include <string.h>
 
-#define LOG_INFO "[%s:%d]: "
-#define LOG_INFO_VAL __func__,__LINE__
-#define LOG(msg, ...) printf(LOG_INFO msg "\n", LOG_INFO_VAL, ##__VA_ARGS__)
-
-typedef struct kv {
-    struct node *child;
-} kv_t;
-
-typedef struct node {
-    kv_t kv[10];
-} node_t;
+#include "trie/trie.h"
+#include "log/log.h"
 
 int trie_insert(node_t *trie, const char* ip) {
     for (size_t i=0; i<strlen(ip); i++) {
@@ -31,14 +22,9 @@ int trie_insert(node_t *trie, const char* ip) {
     return 0;
 }
 
-typedef enum {
-    SEARCH,
-    REMOVE,
-}sor_e;
-
 int trie_search_or_remove(node_t *trie,
                            const char* ip,
-                           sor_e sor,
+                           trie_sor_e sor,
                            size_t *i) {
     assert(i!=NULL);
     char c = ip[*i];
@@ -65,53 +51,3 @@ int trie_search_or_remove(node_t *trie,
     }
     return (strlen(ip) == (*i)) ? 1 : 0;
 }
-
-void trie_test_search() {
-    node_t trie;
-    memset(trie.kv, 0, 10*sizeof(kv_t));
-
-    const char *ip1 = "192.168.1.1";
-    trie_insert(&trie, ip1);
-
-    size_t i = 0;
-    assert(trie_search_or_remove(&trie, ip1, SEARCH, &i) == 1);
-}
-
-void trie_test_remove() {
-    node_t trie;
-    memset(trie.kv, 0, 10*sizeof(kv_t));
-
-    const char *ip1 = "192.168.1.1";
-    trie_insert(&trie, ip1);
-
-    size_t i = 0;
-    assert(trie_search_or_remove(&trie, ip1, REMOVE, &i) == 1);
-    i = 0;
-    assert(trie_search_or_remove(&trie, ip1, SEARCH, &i) == 0);
-}
-
-void trie_test_insert() {
-    node_t trie;
-    memset(trie.kv, 0, 10*sizeof(kv_t));
-
-    const char *ip1 = "192.168.1.1";
-    trie_insert(&trie, ip1);
-
-    assert(trie.kv[0].child == NULL);
-    assert(trie.kv[1].child != NULL);
-    assert(trie.kv[1].child->kv[0].child == NULL);
-    assert(trie.kv[1].child->kv[1].child == NULL);
-    assert(trie.kv[1].child->kv[9].child != NULL);
-    assert(trie.kv[1].child->kv[9].child->kv[2].child != NULL);
-    assert(trie.kv[1].child->kv[9].child->kv[2].child->kv[0].child == NULL);
-    assert(trie.kv[1].child->kv[9].child->kv[2].child->kv[1].child != NULL);
-}
-
-/* int main() {*/
-/*     LOG("main");*/
-/*     trie_testinsert();*/
-/*     trie_testsearch();*/
-/*     trie_testremove();*/
-
-/*     return 0;*/
-/* }*/

@@ -7,6 +7,8 @@ typedef struct node {
     struct node *up;
 } node_t;
 
+void btree_init();
+
 int btree_insert(node_t **n, node_t *parent, int val);
 
 node_t *btree_get_successor_node(node_t *n);

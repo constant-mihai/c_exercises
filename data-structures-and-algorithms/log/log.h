@@ -95,49 +95,108 @@ void log_sprintf(int module_idx,
         _log_flush(module_idx);\
     }while(0) 
 
+//
+// LOG at default index
+//
+#define LOG_DEFAULT_MODULE_INDEX 0
 #define LOG(msg, ...) \
     do{\
-        PRINTF(module_idx_g, L_INFO, msg, ##__VA_ARGS__);\
+        PRINTF(LOG_DEFAULT_MODULE_INDEX, L_INFO, msg, ##__VA_ARGS__);\
     } while(0)
 
 #define LOG_CRIT(msg, ...) \
     do{\
-        PRINTF(module_idx_g, L_CRIT, msg, ##__VA_ARGS__);\
+        PRINTF(LOG_DEFAULT_MODULE_INDEX, L_CRIT, msg, ##__VA_ARGS__);\
     } while(0)
 
 #define LOG_ERR(msg, ...) \
     do{\
-        PRINTF(module_idx_g, L_ERR, msg, ##__VA_ARGS__);\
+        PRINTF(LOG_DEFAULT_MODULE_INDEX, L_ERR, msg, ##__VA_ARGS__);\
     } while(0)
 
 #define LOG_WARN(msg, ...) \
     do{\
-        PRINTF(module_idx_g, L_WARN, msg, ##__VA_ARGS__);\
+        PRINTF(LOG_DEFAULT_MODULE_INDEX, L_WARN, msg, ##__VA_ARGS__);\
     } while(0)
 
 #define LOG_INFO(msg, ...) \
     do{\
-        PRINTF(module_idx_g, L_INFO, msg, ##__VA_ARGS__);\
+        PRINTF(LOG_DEFAULT_MODULE_INDEX, L_INFO, msg, ##__VA_ARGS__);\
     } while(0)
 
 #define LOG_DBG(msg, ...) \
     do{\
-        PRINTF(module_idx_g, L_DBG, msg, ##__VA_ARGS__);\
+        PRINTF(LOG_DEFAULT_MODULE_INDEX, L_DBG, msg, ##__VA_ARGS__);\
     } while(0)
 
 #define LOG_MEM(msg, ...) \
     do{\
-        PRINTF(module_idx_g, L_MEM, msg, ##__VA_ARGS__);\
+        PRINTF(LOG_DEFAULT_MODULE_INDEX, L_MEM, msg, ##__VA_ARGS__);\
     } while(0)
 
-#define LOG_ADD_DEFAULT_MODULE(module_name, appname, loglvl) \
+//
+// Module based
+//
+#define LOG_AT(module_name, msg, ...) \
+    do{\
+        int log_mod_idx = log_find_module_AT(module_name);\
+        if (log_mod_idx > 0) PRINTF(log_mod_idx, L_INFO, msg, ##__VA_ARGS__);\
+    } while(0)
+
+#define LOG_CRIT_AT(module_name, msg, ...) \
+    do{\
+        int log_mod_idx = log_find_module_AT(module_name);\
+        if (log_mod_idx > 0) PRINTF(log_mod_idx, L_CRIT, msg, ##__VA_ARGS__);\
+    } while(0)
+
+#define LOG_ERR_AT(module_name, msg, ...) \
+    do{\
+        int log_mod_idx = log_find_module_AT(module_name);\
+        if (log_mod_idx > 0) PRINTF(log_mod_idx, L_ERR, msg, ##__VA_ARGS__);\
+    } while(0)
+
+#define LOG_WARN_AT(module_name, msg, ...) \
+    do{\
+        int log_mod_idx = log_find_module_AT(module_name);\
+        if (log_mod_idx > 0) PRINTF(log_mod_idx, L_WARN, msg, ##__VA_ARGS__);\
+    } while(0)
+
+#define LOG_INFO_AT(module_name, msg, ...) \
+    do{\
+        int log_mod_idx = log_find_module_AT(module_name);\
+        if (log_mod_idx > 0) PRINTF(log_mod_idx, L_INFO, msg, ##__VA_ARGS__);\
+    } while(0)
+
+#define LOG_DBG_AT(module_name, msg, ...) \
+    do{\
+        int log_mod_idx = log_find_module_AT(module_name);\
+        if (log_mod_idx > 0) PRINTF(log_mod_idx, L_DBG, msg, ##__VA_ARGS__);\
+    } while(0)
+
+#define LOG_MEM_AT(module_name, msg, ...) \
+    do{\
+        int log_mod_idx = log_find_module_AT(module_name);\
+        PRINTF(log_mod_idx, L_MEM, msg, ##__VA_ARGS__);\
+    } while(0)
+
+#define LOG_ADD_DEFAULT_MODULE(module_name, loglvl) \
     do { \
         log_config_t log_config = { \
             .log_to_console = 1, \
             .level = loglvl, \
             .filename = NULL \
         }; \
-        module_idx_g = log_add_module(module_name, appname, log_config); \
+        log_add_module(module_name, log_config); \
+    } while(0)
+
+#define LOG_ADD_MODULE(module_name, ltc, loglvl, fn) \
+    do { \
+        log_config_t log_config = { \
+            .log_to_console = ltc, \
+            .level = loglvl, \
+            .filename = fn \
+        }; \
+        log_add_module(module_name, log_config); \
     } while(0)
 
 int log_open_fd(const char* filename);
@@ -146,7 +205,7 @@ void log_init(const char* appname);
 
 void log_set_thread_name(const char* threadname);
 
-int log_add_module(const char* name, const char* appname, log_config_t config);
+int log_add_module(const char* name, log_config_t config);
 
 void _log_flush(size_t idx);
 

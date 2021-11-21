@@ -4,15 +4,10 @@
 #include <assert.h>
 #include <string.h>
 
-#define LOG_INFO "[%s:%d]: "
-#define LOG_INFO_VAL __func__,__LINE__
-#define LOG(msg, ...) printf(LOG_INFO msg "\n", LOG_INFO_VAL, ##__VA_ARGS__)
+#include "heap/heap.h"
+#include "log/log.h"
 
-typedef struct {
-    uint32_t *array;
-    size_t last;
-    size_t cap;
-} heap_t;
+//TODO add a create function
 
 size_t heap_get_left_child(size_t index) {
     return index*2+1;
@@ -104,80 +99,4 @@ int heap_pop(heap_t *heap) {
     _heap_sink(heap);
 
     return ret;
-}
-
-#define HEAP_SIZE 100
-
-void heap_test_insert() {
-    heap_t heap = {
-        .array = (uint32_t*)calloc(HEAP_SIZE, sizeof(uint32_t)),
-        .last = -1,
-        .cap = HEAP_SIZE,
-    };
-    assert(heap.array != NULL);
-
-    heap_insert(&heap, 10);
-    heap_insert(&heap, 10);
-    heap_insert(&heap, 6);
-    heap_insert(&heap, 9);
-    heap_insert(&heap, 8);
-    heap_insert(&heap, 7);
-    heap_insert(&heap, 20);
-
-    LOG("Dump heap:");
-    for (size_t i=0; heap.last >= i; i++) {
-        LOG("%d", heap.array[i]);
-    }
-}
-
-void heap_test_remove() {
-    heap_t heap = {
-        .array = (uint32_t*)calloc(HEAP_SIZE, sizeof(uint32_t)),
-        .last = -1,
-        .cap = HEAP_SIZE,
-    };
-    assert(heap.array != NULL);
-
-    heap_insert(&heap, 10);
-    heap_insert(&heap, 11);
-    heap_insert(&heap, 6);
-    heap_insert(&heap, 9);
-    heap_insert(&heap, 8);
-    heap_insert(&heap, 7);
-    heap_insert(&heap, 20);
-
-    LOG("Dump heap:");
-    for (size_t i=0; heap.last >= i; i++) {
-        LOG("%d", heap.array[i]);
-    }
-
-    heap_pop(&heap);
-    LOG("Dump heap:");
-    for (size_t i=0; heap.last >= i; i++) {
-        LOG("%d", heap.array[i]);
-    }
-
-    heap_pop(&heap);
-    LOG("Dump heap:");
-    for (size_t i=0; heap.last >= i; i++) {
-        LOG("%d", heap.array[i]);
-    }
-
-    heap_pop(&heap);
-
-    LOG("Dump heap:");
-    for (size_t i=0; heap.last >= i; i++) {
-        LOG("%d", heap.array[i]);
-    }
-
-}
-
-int main(int argc, char ** argv) {
-    (void) argc;
-    (void) argv;
-    LOG("main");
-    //heap_test_insert();
-    heap_test_remove();
-
-    return 0;
 }

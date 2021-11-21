@@ -4,19 +4,8 @@
 #include <string.h>
 #include <stdlib.h>
 
-#include "hash/hash.h"
+#include "trie-dict/trie-dict.h"
 #include "log/log.h"
-
-// each node has a hash table.
-// the keys represent the next letter.
-// the values are pointers to the next nodes.
-typedef struct node {
-    hash_t *hash;
-} node_t;
-
-static int module_idx_g;
-
-#define MAX_HASH_SIZE 1000
 
 int validate_word(const char* word) {
     char c = 0;
@@ -92,11 +81,6 @@ int trie_dict_insert(node_t *trie, const char* word) {
     }
     return 0;
 }
-
-typedef enum {
-    SEARCH,
-    REMOVE,
-}sor_e;
 
 int trie_dict_search_or_remove(node_t *trie,
                            const char* word,
@@ -185,81 +169,3 @@ void trie_print(node_t *trie, const char *prefix) {
         }
     }
 }
-
-void trie_dict_testsearch() {
-    node_t *trie = trie_create();
-
-    const char *word[] = {
-        "a",
-        "alpha",
-        "alphabet",
-        "bat",
-        "baton",
-        "battery",
-        "battering",
-        "croissant",
-    };
-
-    for (size_t i=0; i < sizeof(word)/sizeof(word[0]); i++) {
-        LOG("inserting %s", word[i]);
-        if (trie_dict_insert(trie, word[i]) != 0) {
-            LOG("Error inserting %s", word[i]);
-        }
-    }
-
-    printf("Printing tree\n");
-    const char *prefix = 0;
-    trie_print(trie, prefix);
-    printf("\n");
-
-    for (size_t i=0; i < sizeof(word)/sizeof(word[0]); i++) {
-        //size_t count = 0;
-        //assert(trie_dict_search_or_remove(&trie, word[i], SEARCH, &count) == 1);
-    }
-}
-
-void trie_dict_testremove() {
-    node_t *trie = trie_create(); 
-
-    const char *word[] = {
-        "alphabet",
-        "bat",
-        "baton",
-        "battery",
-    };
-
-    for (size_t i=0; i < sizeof(word)/sizeof(word[0]); i++) {
-        if (trie_dict_insert(trie, word[i]) != 0) {
-            LOG("Error inserting %s", word[i]);
-        }
-    }
-
-    for (size_t i=0; i < sizeof(word)/sizeof(word[0]); i++) {
-        //size_t count = 0;
-        //assert(trie_dict_search_or_remove(&trie, word[i], REMOVE, &count) == 1);
-    }
-
-    for (size_t i=0; i < sizeof(word)/sizeof(word[0]); i++) {
-        //size_t count = 0;
-        //assert(trie_dict_search_or_remove(&trie, word[i], REMOVE, &count) == 0);
-    }
-}
-
-//TODO add tests here.
-// hash api was changed but something is broken in the makefiles and 
-// make didn't see the deps. This will mean that this will end up accessing
-// the function by it's old declaration (?!).
-/* int main() {*/
-/*     log_config_t log_config = {*/
-/*         .log_to_console = 1,*/
-/*         .level = L_DBG, */
-/*         .filename = 0, // TODO test this*/
-/*     };*/
-/*     module_idx_g = log_add_module("trie-dict", "trie-dict", log_config);*/
-/*     hash_init();*/
-/*     LOG("main");*/
-/*     trie_dict_testsearch();*/
-/*     //trie_dict_testremove();*/
-
-/*     return 0;*/
-/* }*/
