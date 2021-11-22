@@ -24,7 +24,7 @@ static size_t modules_cap_s;
 int log_open_fd(const char* filename) {
     int fd = open (filename, O_WRONLY);
     if (fd == -1) {
-        perror("error opening log file");
+        perror("error opening log file\n");
     }
     return fd;
 }
@@ -36,8 +36,9 @@ void log_set_thread_name(const char* threadname) {
 
 void log_init(const char* appname) {
     if (initialized_s == 0) {
+        // don't initialized twice
         hostname_s = malloc(HOST_NAME_MAX*sizeof(char));
-        gethostname(hostname_s, HOST_NAME_MAX + 1);
+        gethostname(hostname_s, HOST_NAME_MAX);
         appname_s = malloc((strlen(appname)+1)*sizeof(char));
         strcpy(appname_s, appname);
         threadname_s = malloc((strlen("main")+1)*sizeof(char));
@@ -47,14 +48,15 @@ void log_init(const char* appname) {
         modules_len_s = 0;
         modules_s = malloc(modules_cap_s*sizeof(char*)); 
         if (modules_s == NULL) {
-            perror("failed to initialized module buffers");
+            perror("failed to initialized module buffers\n");
         }
         for (size_t i=0; i<modules_cap_s; i++) {
             modules_s[i].buffer = malloc(MAX_BUFFER_SIZE*(sizeof(char)));
             if (modules_s[i].buffer == NULL) {
-                perror("failed to initialized module buffer");
+                perror("failed to initialized module buffer\n");
             }
         }
+        LOG_ADD_DEFAULT_MODULE("default", L_INFO);
     }
 }
 
@@ -65,8 +67,11 @@ int log_find_module(const char* name) {
     return -1;
 }
 
-int log_add_module(const char* name, const char* appname, log_config_t config) {
-    log_init(appname);
+int log_add_module(const char* name, log_config_t config) {
+    if (initialized_s == 0) {
+        perror("logging is not initialized\n");
+        exit(1);
+    }
 
     int found_module = log_find_module(name);
     if (found_module >= 0) {
@@ -77,12 +82,12 @@ int log_add_module(const char* name, const char* appname, log_config_t config) {
         modules_s = realloc(modules_s,
                                2*modules_cap_s*sizeof(char*)); 
         if (modules_s == NULL) {
-            perror("failed to initialized module buffers");
+            perror("failed to initialized module buffers\n");
         }
         for (size_t i=modules_cap_s; i<2*modules_cap_s; i++) {
             modules_s[i].buffer = malloc(MAX_BUFFER_SIZE*(sizeof(char)));
             if (modules_s[i].buffer == NULL) {
-                perror("failed to initialized module buffer");
+                perror("failed to initialized module buffer\n");
             }
         }
         modules_cap_s *= 2;
@@ -107,13 +112,13 @@ void _log_flush(size_t idx) {
     if (modules_s[idx].file_fd > 0) {
         int seek = lseek(modules_s[idx].file_fd, 0, SEEK_END);
         if (seek == -1) {
-            perror("error appending to log file.");
+            perror("error appending to log file.\n");
         }
         int nr = write(modules_s[idx].file_fd,
                        modules_s[idx].buffer,
                        strlen(modules_s[idx].buffer));
         if (nr == -1) {
-            perror("write error");
+            perror("write error\n");
         } 
     }
 }
@@ -132,7 +137,7 @@ void log_sprintf(int module_idx,
     char error[128];
 
     if (modules_s+module_idx == NULL || modules_s[module_idx].name == NULL) {
-        sprintf(error, "logging module %d is not initialized.", module_idx);
+        sprintf(error, "logging module %d is not initialized.\n", module_idx);
         perror(error);
         exit(1);
     }
@@ -206,7 +211,7 @@ void log_close(int idx) {
     if (modules_s[idx].file_fd != -1) {
         // TODO what happens if buffer isn't flushed?
         if (close(modules_s[idx].file_fd == -1)) {
-            perror("closing the log file");
+            perror("closing the log file\n");
         }
     }
 }

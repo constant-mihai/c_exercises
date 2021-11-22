@@ -5,10 +5,7 @@
 #include <assert.h>
 
 #include "hash.h"
-
-#include <log.h>
-
-static int module_idx_g;
+#include "log/log.h"
 
 hash_t *hash_create(int cap) {
     hash_t *ht = calloc(1, sizeof(hash_t));
@@ -159,84 +156,15 @@ size_t hash_cap(hash_t *ht) {
     return ht->cap;
 }
 
-static int hash_initialized_g = 0;
+//static int hash_initialized_g = 0;
 void hash_init() {
-    log_config_t log_config = {
-        .log_to_console = 1,
-        .level = L_CRIT,
-        .filename = 0, // TODO test this
-    };
-    if (!hash_initialized_g) {
-        module_idx_g = log_add_module("hash", "hash", log_config);
-    }
-}
-
-void hash_test_set() {
-    hash_t * ht = hash_create(100);
-    int a = 1;
-    int b = 2;
-    int err = 0;
-    err = hash_set(ht, "a", &a, sizeof(int));
-    assert(err == 0);
-    assert(ht->entries[hash_get_index(ht, "a")].key != NULL);
-    assert(!strcmp(ht->entries[hash_get_index(ht, "a")].key, "a"));
-
-    err = hash_set(ht, "b", &b, sizeof(int));
-    assert(ht->entries[hash_get_index(ht, "b")].key != NULL);
-    assert(!strcmp(ht->entries[hash_get_index(ht, "b")].key, "b"));
-    hash_destroy(ht);
-}
-
-void hash_test_get() {
-    hash_t * ht = hash_create(100);
-    int a = 1;
-    int b = 2;
-    int err = 0;
-    int *val = malloc(sizeof(int));
-    err = hash_set(ht, "a", &a, sizeof(int));
-    assert(err == 0);
-    err = hash_get(ht, "a", (void*)&val);
-    assert(err == 0);
-    assert(*val == 1);
-
-    err = hash_set(ht, "b", &b, sizeof(int));
-    assert(err == 0);
-    err = hash_get(ht, "b", (void*)&val);
-    assert(err == 0);
-    assert(*val == 2);
-}
-
-void hash_test_del() {
-    hash_t * ht = hash_create(100);
-    int a = 1;
-    int b = 2;
-    int err = 0;
-    int *val = malloc(sizeof(int));
-    err = hash_set(ht, "a", &a, sizeof(int));
-    assert(err == 0);
-    err = hash_get(ht, "a", (void*)&val);
-    assert(err == 0);
-    assert(*val == 1);
-    err = hash_del(ht, "a");
-    assert(err == 0);
-    err = hash_get(ht, "a", (void*)&val);
-    assert(err == 1);
-
-    err = hash_set(ht, "b", &b, sizeof(int));
-    assert(err == 0);
-    err = hash_del(ht, "b");
-    assert(err == 0);
-    err = hash_get(ht, "b", (void*)&val);
-    assert(err == 1);
-
-}
-
-int main(int argc,  char **argv) {
-    (void)argc;
-    (void)argv;
-    hash_init();
-    hash_test_set();
-    hash_test_get();
-    hash_test_del();
-    return 0;
+    /* log_config_t log_config = {*/
+    /*     .log_to_console = 1,*/
+    /*     .level = L_CRIT,*/
+    /*     .filename = 0, // TODO test this*/
+    /* };*/
+    /* if (!hash_initialized_g) {*/
+    /*     // don't initialize twice*/
+    /*     module_idx_g = log_add_module("hash", log_config);*/
+    /* }*/
 }

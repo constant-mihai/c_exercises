@@ -1,22 +1,11 @@
-#include <log.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <assert.h>
 #include <string.h>
 #include <stdlib.h>
 
-#include "../hash/hash.h"
-
-// each node has a hash table.
-// the keys represent the next letter.
-// the values are pointers to the next nodes.
-typedef struct node {
-    hash_t *hash;
-} node_t;
-
-static int module_idx_g;
-
-#define MAX_HASH_SIZE 1000
+#include "trie-dict/trie-dict.h"
+#include "log/log.h"
 
 int validate_word(const char* word) {
     char c = 0;
@@ -45,7 +34,7 @@ node_t* trie_create() {
     }
 
     // This will also be a leaf.
-    hash_set(trie->hash, "*", (void*) NULL);
+    hash_set(trie->hash, "*", (void*) NULL, 0);
 
     return trie;
 }
@@ -61,20 +50,20 @@ node_t* set_child(node_t *trie, const char* c, int is_leaf) {
     if (hg != 0 /* don't overwrite old values */ ) {
         child = (node_t*)calloc(1, sizeof(node_t));
         child->hash = hash_create(MAX_HASH_SIZE);
-        int hs = hash_set(trie->hash, c, (void*) child);
+        int hs = hash_set(trie->hash, c, (void*) child, sizeof(node_t));
         if (hs < 0) {
             LOG("Error setting %s", c);
             return NULL;
         }
     }
     if (is_leaf) {
-        hash_set(child->hash, "*", (void*) NULL);
+        hash_set(child->hash, "*", (void*) NULL, 0);
     }
 
     return child;
 }
 
-int trie_insert(node_t *trie, const char* word) {
+int trie_dict_insert(node_t *trie, const char* word) {
     if (validate_word(word) != 1) return -1;
 
     hash_del(trie->hash, "*");
@@ -93,12 +82,7 @@ int trie_insert(node_t *trie, const char* word) {
     return 0;
 }
 
-typedef enum {
-    SEARCH,
-    REMOVE,
-}sor_e;
-
-int trie_search_or_remove(node_t *trie,
+int trie_dict_search_or_remove(node_t *trie,
                            const char* word,
                            sor_e sor,
                            size_t *i) {
@@ -122,7 +106,7 @@ int trie_search_or_remove(node_t *trie,
 
     if (hg == 0) {
         (*i)++;
-        found = trie_search_or_remove(child, word, sor, i);
+        found = trie_dict_search_or_remove(child, word, sor, i);
         if (found == 1 && sor == REMOVE) {
             if (*i == strlen(word)) {
                 hash_del(trie->hash, "*");
@@ -184,82 +168,4 @@ void trie_print(node_t *trie, const char *prefix) {
             }
         }
     }
-}
-
-void test_search() {
-    node_t *trie = trie_create();
-
-    const char *word[] = {
-        "a",
-        "alpha",
-        "alphabet",
-        "bat",
-        "baton",
-        "battery",
-        "battering",
-        "croissant",
-    };
-
-    for (size_t i=0; i < sizeof(word)/sizeof(word[0]); i++) {
-        LOG("inserting %s", word[i]);
-        if (trie_insert(trie, word[i]) != 0) {
-            LOG("Error inserting %s", word[i]);
-        }
-    }
-
-    printf("Printing tree\n");
-    const char *prefix = 0;
-    trie_print(trie, prefix);
-    printf("\n");
-
-    for (size_t i=0; i < sizeof(word)/sizeof(word[0]); i++) {
-        size_t count = 0;
-        //assert(trie_search_or_remove(&trie, word[i], SEARCH, &count) == 1);
-    }
-}
-
-void test_remove() {
-    node_t *trie = trie_create(); 
-
-    const char *word[] = {
-        "alphabet",
-        "bat",
-        "baton",
-        "battery",
-    };
-
-    for (size_t i=0; i < sizeof(word)/sizeof(word[0]); i++) {
-        if (trie_insert(trie, word[i]) != 0) {
-            LOG("Error inserting %s", word[i]);
-        }
-    }
-
-    for (size_t i=0; i < sizeof(word)/sizeof(word[0]); i++) {
-        size_t count = 0;
-        //assert(trie_search_or_remove(&trie, word[i], REMOVE, &count) == 1);
-    }
-
-    for (size_t i=0; i < sizeof(word)/sizeof(word[0]); i++) {
-        size_t count = 0;
-        //assert(trie_search_or_remove(&trie, word[i], REMOVE, &count) == 0);
-    }
-}
-
-//TODO add tests here.
-// hash api was changed but something is broken in the makefiles and 
-// make didn't see the deps. This will mean that this will end up accessing
-// the function by it's old declaration (?!).
-int main() {
-    log_config_t log_config = {
-        .log_to_console = 1,
-        .level = L_DBG, 
-        .filename = 0, // TODO test this
-    };
-    module_idx_g = log_add_module("trie-dict", "trie-dict", log_config);
-    hash_init();
-    LOG("main");
-    test_search();
-    //test_remove();
-
-    return 0;
 }

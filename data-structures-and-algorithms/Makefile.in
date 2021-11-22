@@ -1,0 +1,93 @@
+#
+# Implicit variables 
+# -------------------------------------- #
+# -------------------------------------- #
+CCFLAGS += -Wall -fno-diagnostics-show-caret -Wextra -Wcast-align -Werror=return-type -g -O0 -Ddebug #-fPIC
+CPPFLAGS += -Wall -fno-diagnostics-show-caret -Wextra -Wcast-align -Werror=return-type -g -O0 -Ddebug -std=c++17 #-fPIC
+
+LAST_MAKEFILE := $(abspath $(lastword $(MAKEFILE_LIST)))
+SRC_DIR := $(patsubst %/,%,$(dir $(LAST_MAKEFILE)))
+ROOT_PATH := $(patsubst %/,%,$(dir $(SRC_DIR)))
+
+CC := gcc
+CXX := g++
+
+LDFLAGS =
+#LDFLAGS += -Wl,-rpath=$(shell pwd)/log # this is needed if modules are imported by relative path
+TEST_LDFLAGS += $(LDFLAGS)
+
+SHELL:= /bin/bash
+CURR_DIR := $(PWD)
+
+subdirs := binary-tree hash heap list log select-sort trie trie-dict
+test_subdirs := test test/binary-tree test/hash test/heap test/list test/log test/select-sort test/trie test/trie-dict
+
+# TODO extend here with the subdirs list?
+# This would allow one to simple include "include.h".c:w
+include_dirs := $(SRC_DIR) \
+		        /usr/local/include/
+
+#/usr/local/include/gmock/internal
+#/usr/local/include/gtest/internal
+test_include_dirs := $(SRC_DIR) \
+					 $(SRC_DIR)/test \
+					 /usr/local/include/gmock \
+					 /usr/local/include/gtest \
+		             /usr/local/include/ \
+
+INCLUDES := $(foreach dir,$(include_dirs),-I$(dir))
+TEST_INCLUDES := $(foreach dir,$(test_include_dirs),-I$(dir))
+
+#library_dirs := $(shell pwd)/../hash \
+#				$(shell pwd)/../../log
+#LIBRARY_DIRS := $(foreach dir,$(library_dirs),-L$(dir))
+
+#libraries := log
+#LIBRARIES := $(foreach lib,$(libraries),-l$(dir))
+
+test_libraries := gtest_main gtest
+TEST_LIBRARIES := $(foreach lib,$(test_libraries),-l$(lib))
+
+dependency_files = -MP -MMD
+
+# turn on debugging with mode=debug
+ifeq ($(mode),debug)
+	optimize_flags = -g -O0 -Ddebug $(COVFLAGS)
+	defines += -DHUMAN_READABLE_LOGS
+else
+	optimize_flags = -O3
+	LDFLAGS += -rdynamic
+	defines += -DRDYNAMIC
+endif
+
+#
+# Name 
+# -------------------------------------- #
+# -------------------------------------- #
+name := dsaa
+
+#
+# Shared library
+# -------------------------------------- #
+# -------------------------------------- #
+shl_name := $(name)
+shl_version := 1
+shl_release_number := 0
+shl_minor_number := 0
+shl_linker_name := lib$(shl_name).so
+shl_soname := $(shl_linker_name).$(shl_version)
+shl_fullname := $(shl_soname).$(shl_minor_number).$(shl_release_number)
+
+shared_flags := -shared -Wl,-soname,$(shl_soname)
+
+# source file extensions
+c_ext = c
+cpp_ext = cpp
+h_ext = h
+hpp_ext = hpp
+
+#
+# Source search 
+# -------------------------------------- #
+# -------------------------------------- #
+deep_source_search = $(foreach dir,$(1),$(wildcard $(dir)/*.$(2)))

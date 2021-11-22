@@ -1,0 +1,60 @@
+#
+# Implicit variables 
+# -------------------------------------- #
+# -------------------------------------- #
+CCFLAGS += -Wall -fno-diagnostics-show-caret -Wextra -Wcast-align -Werror=return-type -g -O0 -Ddebug #-fPIC
+CPPFLAGS += -Wall -fno-diagnostics-show-caret -Wextra -Wcast-align -Werror=return-type -g -O0 -Ddebug -std=c++17 #-fPIC
+
+LAST_MAKEFILE := $(abspath $(lastword $(MAKEFILE_LIST)))
+SRC_DIR := $(patsubst %/,%,$(dir $(LAST_MAKEFILE)))
+ROOT_PATH := $(patsubst %/,%,$(dir $(SRC_DIR)))
+
+CC := gcc
+CXX := g++
+
+#LDFLAGS += -Wl,-rpath=$(shell pwd)/log # this is needed if modules are imported by relative path
+TEST_LDFLAGS += $(LDFLAGS)
+
+SHELL:= /bin/bash
+CURR_DIR := $(PWD)
+
+subdirs :=
+test_subdirs :=
+
+# TODO extend here with the subdirs list?
+# This would allow one to simple include "include.h".c:w
+include_dirs := . \
+			    $(SRC_DIR) \
+				$(SRC_DIR)/.. \
+				/usr/local/include/gmock \
+				/usr/local/include/gtest \
+		        /usr/local/include/ \
+
+INCLUDES := $(foreach dir,$(include_dirs),-I$(dir))
+TEST_INCLUDES := $(foreach dir,$(test_include_dirs),-I$(dir))
+
+#library_dirs := $(shell pwd)/../hash \
+#				$(shell pwd)/../../log
+#LIBRARY_DIRS := $(foreach dir,$(library_dirs),-L$(dir))
+
+#libraries := log
+#LIBRARIES := $(foreach lib,$(libraries),-l$(dir))
+
+dependency_files = -MP -MMD
+
+# turn on debugging with mode=debug
+ifeq ($(mode),debug)
+	optimize_flags = -g -O0 -Ddebug $(COVFLAGS)
+	defines += -DHUMAN_READABLE_LOGS
+else
+	optimize_flags = -O3
+	LDFLAGS += -rdynamic
+	defines += -DRDYNAMIC
+endif
+
+# source file extensions
+c_ext = c
+cpp_ext = cpp
+h_ext = h
+hpp_ext = hpp
+

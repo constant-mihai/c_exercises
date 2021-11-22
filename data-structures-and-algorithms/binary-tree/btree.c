@@ -3,9 +3,7 @@
 #include <assert.h>
 #include <string.h>
 
-#define LOG_INFO "[%s:%d]: "
-#define LOG_INFO_VAL __func__,__LINE__
-#define LOG(msg, ...) printf(LOG_INFO msg "\n", LOG_INFO_VAL, ##__VA_ARGS__)
+#include "log/log.h"
 
 typedef struct node {
     int val;
@@ -13,6 +11,10 @@ typedef struct node {
     struct node *right;
     struct node *up;
 } node_t;
+
+void btree_init() {
+    LOG_ADD_DEFAULT_MODULE("btree", L_INFO);
+}
 
 int btree_insert(node_t **n, node_t *parent, int val) {
     if (n == NULL) {
@@ -153,81 +155,17 @@ int btree_remove(node_t *n, int val) {
     return ret;
 }
 
+// TODO
 int btree_find(node_t *n, int val) {
+    (void) n;
+    (void) val;
 
     return 0;
 }
 
-int btree_dump(node_t *n);
-
-void test_insert() {
-    node_t *root = NULL;
-    LOG("Insert root");
-    assert(btree_insert(&root, NULL, 4) == 0);
-    LOG("Insert 1");
-    assert(btree_insert(&root, NULL, 1) == 0);
-    LOG("Insert 5");
-    assert(btree_insert(&root, NULL, 5) == 0);
-
-    LOG("Assert root");
-    assert(root->val == 4);
-    assert(root->up == NULL);
-    assert(root->left != NULL);
-    assert(root->right != NULL);
-
-    LOG("Assert left");
-    assert(root->left->up == root);
-    assert(root->left->val == 1);
-
-    LOG("Assert right");
-    assert(root->right->up == root);
-    assert(root->right->val == 5);
-}
-
-void test_successor() {
-    node_t *root = NULL;
-    assert(btree_insert(&root, NULL, 4) == 0);
-    assert(btree_insert(&root, NULL, 1) == 0);
-    assert(btree_insert(&root, NULL, 10) == 0);
-    assert(btree_insert(&root, NULL, 11) == 0);
-    assert(btree_insert(&root, NULL, 5) == 0);
-
-    node_t *suc = btree_get_successor_node(root);
-    assert(suc != NULL);
-    assert(suc->val == 5);
-}
-
-void test_remove() {
-    node_t *root = NULL;
-    assert(btree_insert(&root, NULL, 4) == 0);
-    assert(btree_insert(&root, NULL, 1) == 0);
-    assert(btree_insert(&root, NULL, 10) == 0);
-    assert(btree_insert(&root, NULL, 11) == 0);
-    assert(btree_insert(&root, NULL, 5) == 0);
-
-    assert(btree_remove(root, 1) == 0);
-    assert(root->left == NULL);
-    assert(btree_remove(root, 1) == 1);
-
-    assert(btree_remove(root, 10) == 0);
-    assert(root->right != NULL);
-    assert(root->right->val == 11);
-
-    assert(btree_remove(root, 10) == 1);
-    assert(root->right != NULL);
-    assert(root->right->val == 11);
-}
-
-int main(int argc, char ** argv) {
-    LOG("main");
-    test_insert();
-    test_successor();
-    test_remove();
-
-    const char* str1 = "abc";
-    const char* str2 = "abd";
-
-    LOG("cmp: %d", strcmp(str1, str2));
+// TODO
+int btree_dump(node_t *n) {
+    (void) n;
 
     return 0;
 }
