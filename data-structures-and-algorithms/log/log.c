@@ -15,11 +15,11 @@ typedef struct log_module {
 static char* hostname_s;
 static char* appname_s;
 //TODO need to think about thread names
-thread_local static char* threadname_s;
-static int initialized_s = 0;
-static log_module_t *modules_s;
-static size_t modules_len_s;
-static size_t modules_cap_s;
+static __thread char* threadname_s;
+static __thread int initialized_s = 0;
+static __thread log_module_t *modules_s;
+static __thread size_t modules_len_s;
+static __thread size_t modules_cap_s;
 
 int log_open_fd(const char* filename) {
     int fd = open (filename, O_WRONLY);
@@ -36,7 +36,7 @@ void log_set_thread_name(const char* threadname) {
 
 void log_init(const char* appname) {
     if (initialized_s == 0) {
-        // don't initialized twice
+        // don't initialize twice
         hostname_s = malloc(HOST_NAME_MAX*sizeof(char));
         gethostname(hostname_s, HOST_NAME_MAX);
         appname_s = malloc((strlen(appname)+1)*sizeof(char));
@@ -80,7 +80,7 @@ int log_add_module(const char* name, log_config_t config) {
 
     if (modules_len_s >= modules_cap_s) {
         modules_s = realloc(modules_s,
-                               2*modules_cap_s*sizeof(char*)); 
+                            2*modules_cap_s*sizeof(char*)); 
         if (modules_s == NULL) {
             perror("failed to initialized module buffers\n");
         }
@@ -108,7 +108,9 @@ int log_add_module(const char* name, log_config_t config) {
 void _log_flush(size_t idx) {
     if (modules_s[idx].config.log_to_console == 1) {
         printf("%s", modules_s[idx].buffer);
+        return;
     }
+
     if (modules_s[idx].file_fd > 0) {
         int seek = lseek(modules_s[idx].file_fd, 0, SEEK_END);
         if (seek == -1) {
@@ -120,7 +122,11 @@ void _log_flush(size_t idx) {
         if (nr == -1) {
             perror("write error\n");
         } 
+    } else {
+        perror("bad file descriptor\n");
     }
+
+    return;
 }
 
 //TODO idx might be out of bounds here.

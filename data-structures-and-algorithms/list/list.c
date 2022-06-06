@@ -5,33 +5,85 @@
 #include "list/list.h"
 #include "log/log.h"
 
-list *list_create() {
-    list *l = (list*)malloc(sizeof(list));
+list_t *list_create() {
+    list_t *l = (list_t*)malloc(sizeof(list_t));
+    l->head = NULL;
+    l->tail = NULL;
 
     return l;
 }
 
 // insert after prev
-int list_insert(node_t *prev, int value) {
-    node_t *n = (node_t*)malloc(sizeof(node_t));
+void list_insert(list_t *list, node_t **pprev, int value) {
+    node_t *prev = *pprev;
+
+    node_t *n = (node_t*)calloc(1, sizeof(node_t));
+    n->value = value;
+
+    if (prev == NULL) {
+        *pprev = n;
+        list->head = n;
+        return;
+    }
 
     n->next = prev->next;
     n->prev = prev;
 
     if (prev->next != NULL) {
         prev->next->prev = n;
+    } else {
+        list->tail = n;
     }
-    prev->next = n;
 
-    n->value = value;
+    prev->next = n;
+}
+
+void list_append(list_t *list, int value) {
+    node_t *it = list->head;
+    while(it->next != NULL) {
+        it = it->next;
+    }
+
+    return list_insert(list, &it, value);
+}
+
+int list_remove(list_t *list, int value) {
+    node_t *it = list->head;
+    while (it != NULL && it->value != value) {
+        it = it->next;
+    }
+
+    if (it == NULL) return -1;
+
+    if (it->prev != NULL) {
+        it->prev->next = it->next;
+    } else {
+        list->head = it->next;
+    }
+
+    if (it->next != NULL) {
+        it->next->prev = it->prev;
+    } else {
+        list->tail = it->prev;
+    }
+
+    free(it);
     return 0;
 }
 
-int list_remove(node_t *n, int value) {
-    (void) n;
-    (void) value;
+node_t *list_pop(list_t *list) {
+    if (!list->tail) return NULL;
 
-    return 0;
+    node_t *t = list->tail;
+    if (list->tail->prev != NULL) {
+        list->tail = list->tail->prev;
+        list->tail->next = NULL;
+    } else {
+        list->tail = list->head = NULL;
+    }
+
+    t->prev = NULL;
+    return t;
 }
 
 void print_node(int value) {
@@ -40,8 +92,10 @@ void print_node(int value) {
 }
 
 void list_foreach(node_t *n, print_node_fn pn) {
-    while(n != NULL) {
+    if (n == NULL) return;
+
+    do {
         pn(n->value);
         n = n->next;
-    }
+    } while(n != NULL);
 }

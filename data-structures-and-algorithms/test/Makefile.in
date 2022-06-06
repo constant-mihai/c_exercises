@@ -2,7 +2,7 @@
 # Implicit variables 
 # -------------------------------------- #
 # -------------------------------------- #
-CCFLAGS += -Wall -fno-diagnostics-show-caret -Wextra -Wcast-align -Werror=return-type -g -O0 -Ddebug #-fPIC
+CCFLAGS += -lpthread -Wall -fno-diagnostics-show-caret -Wextra -Wcast-align -Werror=return-type -g -O0 -Ddebug #-fPIC
 CPPFLAGS += -Wall -fno-diagnostics-show-caret -Wextra -Wcast-align -Werror=return-type -g -O0 -Ddebug -std=c++17 #-fPIC
 
 LAST_MAKEFILE := $(abspath $(lastword $(MAKEFILE_LIST)))
