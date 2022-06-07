@@ -19,12 +19,12 @@ TEST_F(TestList, TestOperations) {
     list_t *l = list_create();
 
     // {}
-    list_insert(l, &l->head, 11);
+    list_insert(l, l->head, 11);
     node_t *tmp = l->head;
     // { 11 }
     list_append(l, 13);
     // { 11 13 }
-    list_insert(l, &tmp, 12);
+    list_insert(l, tmp, 12);
     // { 11 12 13 }
     list_foreach(l->head, print_node);
 
@@ -37,12 +37,12 @@ TEST_F(TestList, TestOperations) {
 
     LOG("Test pop");
     // {}
-    list_insert(l, &l->head, 11);
+    list_insert(l, l->head, 11);
     tmp = l->head;
     // { 11 }
     list_append(l, 13);
     // { 11 13 }
-    list_insert(l, &tmp, 12);
+    list_insert(l, tmp, 12);
     // { 11 12 13 }
     list_foreach(l->head, print_node);
 

@@ -14,7 +14,7 @@ typedef struct {
 list_t *list_create();
 
 // insert after prev
-void list_insert(list_t *list, node_t **prev, int value);
+void list_insert(list_t *list, node_t *prev, int value);
 
 void list_append(list_t *list, int value);
 

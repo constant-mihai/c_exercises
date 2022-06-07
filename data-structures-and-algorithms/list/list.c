@@ -7,22 +7,27 @@
 
 list_t *list_create() {
     list_t *l = (list_t*)malloc(sizeof(list_t));
-    l->head = NULL;
-    l->tail = NULL;
+    l->head = l->tail = NULL;
 
     return l;
 }
 
 // insert after prev
-void list_insert(list_t *list, node_t **pprev, int value) {
-    node_t *prev = *pprev;
-
+void list_insert(list_t *list, node_t *prev, int value) {
     node_t *n = (node_t*)calloc(1, sizeof(node_t));
     n->value = value;
 
+    if (list->head == NULL && list->tail == NULL) {
+        n->next = list->head;
+        list->head = list->tail = n;
+        n->prev = NULL;
+        return;
+    }
+
     if (prev == NULL) {
-        *pprev = n;
+        n->next = list->head;
         list->head = n;
+        n->prev = NULL;
         return;
     }
 
@@ -40,11 +45,11 @@ void list_insert(list_t *list, node_t **pprev, int value) {
 
 void list_append(list_t *list, int value) {
     node_t *it = list->head;
-    while(it->next != NULL) {
+    while(it != NULL && it->next != NULL) {
         it = it->next;
     }
 
-    return list_insert(list, &it, value);
+    return list_insert(list, it, value);
 }
 
 int list_remove(list_t *list, int value) {

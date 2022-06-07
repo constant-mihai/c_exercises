@@ -12,6 +12,10 @@ void *thread_func(void *arg)
     LOG_ADD_DEFAULT_MODULE("log-test", L_INFO);
     log_set_thread_name(str);
 
+    if (!strcmp(str, "thread 1")) {
+        sleep(1.5);
+    }
+
     LOG_AT("log-test", "log message: %s", str);
 
     return NULL;
