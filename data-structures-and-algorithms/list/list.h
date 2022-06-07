@@ -9,14 +9,18 @@ typedef struct node {
 typedef struct {
     node_t *head;
     node_t *tail;
-} list;
+} list_t;
 
-list *list_create();
+list_t *list_create();
 
 // insert after prev
-int list_insert(node_t *prev, int value);
+void list_insert(list_t *list, node_t *prev, int value);
 
-int list_remove(node_t *n, int value);
+void list_append(list_t *list, int value);
+
+int list_remove(list_t *n, int value);
+
+node_t *list_pop(list_t *n);
 
 typedef void (*print_node_fn)(int);
 

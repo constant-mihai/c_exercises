@@ -19,7 +19,7 @@ class TestBinaryTree: public ::testing::Test {
 TEST_F(TestBinaryTree, TestInsert) {
     node_t *root = NULL;
     LOG("Insert root");
-    assert(btree_insert(&root, NULL, 4) == 0);
+    EXPECT_EQ(btree_insert(&root, NULL, 4), 0);
     LOG("Insert 1");
     assert(btree_insert(&root, NULL, 1) == 0);
     LOG("Insert 5");
