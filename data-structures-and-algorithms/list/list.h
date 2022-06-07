@@ -11,16 +11,16 @@ typedef struct {
     node_t *tail;
 } list_t;
 
-list_t *list_create();
+extern list_t *list_create();
 
 // insert after prev
-void list_insert(list_t *list, node_t *prev, int value);
+extern void list_insert(list_t *list, node_t *prev, int value);
 
-void list_append(list_t *list, int value);
+extern void list_append(list_t *list, int value);
 
-int list_remove(list_t *n, int value);
+extern int list_remove(list_t *n, int value);
 
-node_t *list_pop(list_t *n);
+extern node_t *list_pop(list_t *n);
 
 typedef void (*print_node_fn)(int);
 

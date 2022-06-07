@@ -9,7 +9,7 @@ include Makefile.in
 # ----------------------------- #
 .PHONY: all subdirs test-subdirs clean cleanall debug debug-shared shared help clean-subdirs
 
-verbose = $(if $(or $(findstring yes,$(v)),$(findstring 1, $(v))),,@)
+#verbose=@ #TODO
 
 h := $(wildcard *.h) $(call deep_source_search,$(subdirs),$(h_ext))
 hpp := $(wildcard *.hpp) $(call deep_source_search,$(subdirs),$(hpp_ext))
