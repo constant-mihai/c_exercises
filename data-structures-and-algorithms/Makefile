@@ -7,7 +7,7 @@ include Makefile.in
 # Phony 
 # ----------------------------- #
 # ----------------------------- #
-.PHONY: all subdirs test-subdirs clean cleanall debug help clean-subdirs
+.PHONY: all subdirs test-subdirs clean cleanall debug debug-shared shared help clean-subdirs
 
 verbose = $(if $(or $(findstring yes,$(v)),$(findstring 1, $(v))),,@)
 
@@ -67,9 +67,10 @@ subdirs:
 	@echo "    $< -> $@"
 	$(verbose)$(CC) $(dependency_files) $(CFLAGS) $(optimize_flags) $(defines) $(INCLUDES) -c $(realpath $<) -o $@
 
-shared: subdirs # TODO library prerequisite
+shared: export CFLAGS += -fPIC
+shared: subdirs
 	@echo Linking shared lib.
-	@CFLAGS+=-fPIC
+	@echo $(CFLAGS)
 	$(verbose)$(compile_shared_lib_fn)
 
 test: subdirs test-subdirs $(objs)
@@ -105,7 +106,7 @@ cleanall:
 	$(if $(findstring yes,$(recursive)),$(clean_subdirectories),)
 	$(clean_main_fn)
 
-debug: CPPFLAGS += -g 
+debug: CPPFLAGS += -g
 debug: all 
 
 debug-shared: CPPFLAGS += -g
