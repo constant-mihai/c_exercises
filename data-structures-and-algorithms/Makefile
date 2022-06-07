@@ -65,10 +65,11 @@ subdirs:
 
 %.o: %.$(c_ext)
 	@echo "    $< -> $@"
-	$(verbose)$(CC) $(dependency_files) $(CCFLAGS) $(optimize_flags) $(defines) $(INCLUDES) -c $(realpath $<) -o $@
+	$(verbose)$(CC) $(dependency_files) $(CFLAGS) $(optimize_flags) $(defines) $(INCLUDES) -c $(realpath $<) -o $@
 
 shared: subdirs # TODO library prerequisite
 	@echo Linking shared lib.
+	@CFLAGS+=-fPIC
 	$(verbose)$(compile_shared_lib_fn)
 
 test: subdirs test-subdirs $(objs)

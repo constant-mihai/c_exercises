@@ -8,7 +8,7 @@ CC ?= gcc
 C_EXT = c
 CPP_EXT = cpp
 
-CCFLAGS = -pthread
+CFLAGS = -pthread
 CXXFLAGS = -pthread
 LDFLAGS = -pthread
 
@@ -40,7 +40,7 @@ default: all;
 all: $(BIN_NAME)
 
 $(OBJECTS): $(C_SOURCES)
-	$(VERBOSE)$(CC) $(CCFLAGS) $(CC_COMPILE_FLAGS) $(INCLUDES) -c $(realpath $<) -o $@
+	$(VERBOSE)$(CC) $(CFLAGS) $(CC_COMPILE_FLAGS) $(INCLUDES) -c $(realpath $<) -o $@
 
 # Link the application
 $(BIN_NAME): $(OBJECTS) $(DEFS_FILE)

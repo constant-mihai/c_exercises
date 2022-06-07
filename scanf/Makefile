@@ -9,7 +9,7 @@ CXX ?= g++
 C_EXT = c
 CPP_EXT = cpp
 
-CCFLAGS = -pthread
+CFLAGS = -pthread
 CXXFLAGS = -pthread
 LDFLAGS = -pthread
 

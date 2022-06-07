@@ -28,7 +28,7 @@ all: $(objs) $(incs)
 
 %.o: %.$(c_ext)
 	@echo "    $< -> $@"
-	$(verbose)$(CC) $(dependency_files) $(CCFLAGS) $(optimize_flags) $(defines) $(INCLUDES) -c $(realpath $<) -o $@
+	$(verbose)$(CC) $(dependency_files) $(CFLAGS) $(optimize_flags) $(defines) $(INCLUDES) -c $(realpath $<) -o $@
 
 .PHONY: clean-coverage
 clean-coverage:

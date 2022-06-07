@@ -1,7 +1,7 @@
 include ../Makefile.subdir
 
 # Add any additional compile flag here
-CCFLAGS +=
+CFLAGS +=
 CXXFLAGS +=
 
 # Add additional include directives here

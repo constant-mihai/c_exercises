@@ -2,8 +2,8 @@
 # Implicit variables 
 # -------------------------------------- #
 # -------------------------------------- #
-CCFLAGS += -Wall -fno-diagnostics-show-caret -Wextra -Wcast-align -Werror=return-type -g -O0 -Ddebug #-fPIC
-CPPFLAGS += -Wall -fno-diagnostics-show-caret -Wextra -Wcast-align -Werror=return-type -g -O0 -Ddebug -std=c++17 #-fPIC
+CFLAGS += -Wall -fno-diagnostics-show-caret -Wextra -Wcast-align -Werror=return-type -g -O0 -Ddebug
+CPPFLAGS += -Wall -fno-diagnostics-show-caret -Wextra -Wcast-align -Werror=return-type -g -O0 -Ddebug -std=c++17
 
 LAST_MAKEFILE := $(abspath $(lastword $(MAKEFILE_LIST)))
 SRC_DIR := $(patsubst %/,%,$(dir $(LAST_MAKEFILE)))
