@@ -13,7 +13,7 @@ list_t *list_create() {
 }
 
 // insert after prev
-void list_insert(list_t *list, node_t *prev, int value) {
+void list_insert(list_t *list, node_t *prev, void* value) {
     node_t *n = (node_t*)calloc(1, sizeof(node_t));
     n->value = value;
 
@@ -43,7 +43,7 @@ void list_insert(list_t *list, node_t *prev, int value) {
     prev->next = n;
 }
 
-void list_append(list_t *list, int value) {
+void list_append(list_t *list, void* value) {
     node_t *it = list->head;
     while(it != NULL && it->next != NULL) {
         it = it->next;
@@ -52,7 +52,7 @@ void list_append(list_t *list, int value) {
     return list_insert(list, it, value);
 }
 
-int list_remove(list_t *list, int value) {
+int list_remove(list_t *list, void* value) {
     node_t *it = list->head;
     while (it != NULL && it->value != value) {
         it = it->next;
@@ -91,8 +91,8 @@ node_t *list_pop(list_t *list) {
     return t;
 }
 
-void print_node(int value) {
-    LOG("value: %d", value);
+void print_node(void* value) {
+    LOG("value: %d", *(int*)value);
     return;
 }
 
@@ -103,4 +103,12 @@ void list_foreach(node_t *n, print_node_fn pn) {
         pn(n->value);
         n = n->next;
     } while(n != NULL);
+}
+
+void list_destroy(list_t **list) {
+    list_t *vl = *list;
+    for (node_t *n = vl->head; n != NULL; n = n->next) {
+        free(n->value);
+    }
+    free(vl);
 }

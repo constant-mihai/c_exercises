@@ -46,9 +46,13 @@ endef
 #
 # Recipes
 #
+# This took a few hours to debug, so I will leave a comment here for the next time:
+# the linked libraries need to be at the end
+# https://stackoverflow.com/questions/45135/why-does-the-order-in-which-libraries-are-linked-sometimes-cause-errors-in-gcc
+# https://www.cprogramming.com/tutorial/shared-libraries-linux-gcc.html
 all: subdirs $(objs) # TODO library prerequisite
 	@echo Linking executable.
-	$(verbose)$(CC) $(objs) $(LDFLAGS) $(LIBRARY_DIRS) $(LIBRARIES) -o $(name)
+	$(verbose)$(CC) $(objs) $(LDFLAGS) -o $(name) $(LIBRARY_DIRS) $(LIBRARIES)
 
 subdirs:
 	@echo Compiling application objects.

@@ -19,8 +19,25 @@ TEST_LDFLAGS += $(LDFLAGS)
 SHELL:= /bin/bash
 CURR_DIR := $(PWD)
 
-subdirs := binary-tree hash heap list log select-sort trie trie-dict
-test_subdirs := test test/binary-tree test/hash test/heap test/list test/log test/select-sort test/trie test/trie-dict
+subdirs := binary-tree \
+	hash \
+	heap \
+	list \
+	log \
+	select-sort \
+	trie trie-dict \
+	buffer
+
+test_subdirs := test \
+	test/binary-tree \
+	test/hash \
+	test/heap \
+	test/list \
+	test/log \
+	test/select-sort \
+	test/trie \
+	test/trie-dict \
+	test/buffer \
 
 # TODO extend here with the subdirs list?
 # This would allow one to simple include "include.h".c:w
