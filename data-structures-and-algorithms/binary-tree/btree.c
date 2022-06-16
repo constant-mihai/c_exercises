@@ -13,7 +13,7 @@ typedef struct node {
 } node_t;
 
 void btree_init() {
-    LOG_ADD_DEFAULT_MODULE("btree", L_INFO);
+    LOG_CREATE_DEFAULT("btree", L_INFO);
 }
 
 int btree_insert(node_t **n, node_t *parent, int val) {

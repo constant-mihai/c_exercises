@@ -1,9 +1,11 @@
-#include "log.h" 
 #include <stdarg.h>
 #include <threads.h>
 #include <unistd.h>
 #include <limits.h>
 #include <time.h>
+
+#include "log.h" 
+#include "log_internals.h" 
 
 typedef struct log_module {
     char *name;
@@ -12,14 +14,18 @@ typedef struct log_module {
     log_config_t config;
 } log_module_t;
 
+typedef struct log {
+    log_module_t *modules;
+    size_t len;
+    size_t cap;
+} log_t;
+
 static char* hostname_s;
 static char* appname_s;
 //TODO need to think about thread names
 static __thread char* threadname_s;
 static __thread int initialized_s = 0;
-static __thread log_module_t *modules_s;
-static __thread size_t modules_len_s;
-static __thread size_t modules_cap_s;
+static __thread log_t *log_s;
 
 int log_open_fd(const char* filename) {
     int fd = open (filename, O_WRONLY);
@@ -29,96 +35,115 @@ int log_open_fd(const char* filename) {
     return fd;
 }
 
-void log_set_thread_name(const char* threadname) {
-    threadname_s = malloc((strlen(threadname_s)+1)*sizeof(char));
-    strcpy(threadname_s, threadname);
+void log_init(const char *appname) {
+    log_create(appname, "main");
 }
 
-void log_init(const char* appname) {
+void _log_init_modules(size_t start, size_t buf_size) {
+    for (size_t i=start; i<log_s->cap; i++) {
+        log_s->modules[i].buffer = malloc(buf_size*(sizeof(char)));
+        if (log_s->modules[i].buffer == NULL) {
+            perror("failed to initialized module buffer\n");
+            exit(1);
+        }
+    }
+}
+
+void log_create(const char* appname, const char* threadname) {
     if (initialized_s == 0) {
-        // don't initialize twice
         hostname_s = malloc(HOST_NAME_MAX*sizeof(char));
         gethostname(hostname_s, HOST_NAME_MAX);
+
         appname_s = malloc((strlen(appname)+1)*sizeof(char));
         strcpy(appname_s, appname);
-        threadname_s = malloc((strlen("main")+1)*sizeof(char));
-        strcpy(threadname_s, "main");
-        initialized_s = 1;
-        modules_cap_s = 10;
-        modules_len_s = 0;
-        modules_s = malloc(modules_cap_s*sizeof(char*)); 
-        if (modules_s == NULL) {
+
+        threadname_s = malloc((strlen(threadname_s)+1)*sizeof(char));
+        strcpy(threadname_s, threadname);
+
+        log_s->cap = DEFAULT_MODULES_NUM;
+        log_s->len = 0;
+        log_s->modules = malloc(log_s->cap * sizeof(log_module_t)); 
+        if (log_s->modules == NULL) {
             perror("failed to initialized module buffers\n");
         }
-        for (size_t i=0; i<modules_cap_s; i++) {
-            modules_s[i].buffer = malloc(MAX_BUFFER_SIZE*(sizeof(char)));
-            if (modules_s[i].buffer == NULL) {
-                perror("failed to initialized module buffer\n");
-            }
-        }
-        LOG_ADD_DEFAULT_MODULE("default", L_INFO);
+
+        // pre-allocate the buffers for the modules.
+        _log_init_modules(0, DEFAULT_BUFFER_SIZE);
+        initialized_s = 1;
     }
 }
 
 int log_find_module(const char* name) {
-    for (size_t i=0; i<modules_len_s; i++) {
-        if (!strcmp(name, modules_s[i].name)) return i;
+    for (size_t i=0; i<log_s->len; i++) {
+        if (!strcmp(name, log_s->modules[i].name)) return i;
     }
     return -1;
 }
 
+void _log_set_config(log_config_t *dst, log_config_t *src) {
+    dst->log_to_console = src->log_to_console;
+    dst->level = src->level;
+    dst->filename = NULL;
+    if (src->filename != NULL) {
+        dst->filename = malloc((strlen(src->filename) + 1) * sizeof(char));
+        strcpy(dst->filename, src->filename);
+    }
+}
+
 int log_add_module(const char* name, log_config_t config) {
+    int found_module = 0, old_cap = 0;
+
     if (initialized_s == 0) {
         perror("logging is not initialized\n");
         exit(1);
     }
 
-    int found_module = log_find_module(name);
+    found_module = log_find_module(name);
     if (found_module >= 0) {
         return found_module;
     }
 
-    if (modules_len_s >= modules_cap_s) {
-        modules_s = realloc(modules_s,
-                            2*modules_cap_s*sizeof(char*)); 
-        if (modules_s == NULL) {
+    if (log_s->len > log_s->cap) {
+        old_cap = log_s->cap;
+        log_s->cap *= 2;
+        log_s->modules = realloc(log_s->modules,
+                                 log_s->cap * sizeof(log_module_t*)); 
+        if (log_s->modules == NULL) {
             perror("failed to initialized module buffers\n");
+            exit(1);
         }
-        for (size_t i=modules_cap_s; i<2*modules_cap_s; i++) {
-            modules_s[i].buffer = malloc(MAX_BUFFER_SIZE*(sizeof(char)));
-            if (modules_s[i].buffer == NULL) {
-                perror("failed to initialized module buffer\n");
-            }
-        }
-        modules_cap_s *= 2;
+        _log_init_modules(old_cap, DEFAULT_BUFFER_SIZE);
     }
 
-    memcpy(&modules_s[modules_len_s].config, &config, sizeof(log_config_t));
-    if (modules_s[modules_len_s].config.filename != NULL) {
-        modules_s[modules_len_s].file_fd = log_open_fd(modules_s[modules_len_s].config.filename);
+    _log_set_config(&log_s->modules[log_s->len].config, &config);
+    if (log_s->modules[log_s->len].config.filename != NULL) {
+        log_s->modules[log_s->len].file_fd = log_open_fd(log_s->modules[log_s->len].config.filename);
     }
-    modules_s[modules_len_s].name = malloc(strlen(name)*sizeof(char));
-    strcpy(modules_s[modules_len_s].name, name);
+    log_s->modules[log_s->len].name = malloc((strlen(name)+1)*sizeof(char));
+    strcpy(log_s->modules[log_s->len].name, name);
 
-    modules_len_s++;
-    return modules_len_s-1;
+    log_s->len++;
+    return log_s->len-1;
 }
 
-//TODO idx might be out of bounds here.
 void _log_flush(size_t idx) {
-    if (modules_s[idx].config.log_to_console == 1) {
-        printf("%s", modules_s[idx].buffer);
+    if (idx >= log_s->len) {
         return;
     }
 
-    if (modules_s[idx].file_fd > 0) {
-        int seek = lseek(modules_s[idx].file_fd, 0, SEEK_END);
+    if (log_s->modules[idx].config.log_to_console == 1) {
+        printf("%s", log_s->modules[idx].buffer);
+        return;
+    }
+
+    if (log_s->modules[idx].file_fd > 0) {
+        int seek = lseek(log_s->modules[idx].file_fd, 0, SEEK_END);
         if (seek == -1) {
             perror("error appending to log file.\n");
         }
-        int nr = write(modules_s[idx].file_fd,
-                       modules_s[idx].buffer,
-                       strlen(modules_s[idx].buffer));
+        int nr = write(log_s->modules[idx].file_fd,
+                       log_s->modules[idx].buffer,
+                       strlen(log_s->modules[idx].buffer));
         if (nr == -1) {
             perror("write error\n");
         } 
@@ -129,11 +154,7 @@ void _log_flush(size_t idx) {
     return;
 }
 
-//TODO idx might be out of bounds here.
-//TODO the macros and this function should be refactored so that the level
-// is one of the parameters. Otherwise lower log levels than what is set cannot be
-// skipped.
-void log_sprintf(int module_idx,
+void log_sprintf(size_t module_idx,
                  int level,
                  const char* func,
                  const char* file,
@@ -141,20 +162,23 @@ void log_sprintf(int module_idx,
                  const char *fmt, ...) {
     va_list args;
     char error[128];
-
-    if (modules_s+module_idx == NULL || modules_s[module_idx].name == NULL) {
-        sprintf(error, "logging module %d is not initialized.\n", module_idx);
-        perror(error);
-        exit(1);
-    }
-
     struct timespec ts;
     struct tm tm;
+
+    if (module_idx >= log_s->len) {
+        sprintf(error, "logging module %lu is not initialized.\n", module_idx);
+        perror(error);
+        return;
+    }
+
+    if (log_s->modules[module_idx].config.level < level) {
+        return;
+    }
 
     clock_gettime(CLOCK_REALTIME, &ts);
     gmtime_r(&(ts.tv_sec), &tm);
 
-    int pos = sprintf(modules_s[module_idx].buffer, LOG_HEADER_FORMAT, LOG_HEADER_VAL);
+    int pos = sprintf(log_s->modules[module_idx].buffer, LOG_HEADER_FORMAT, LOG_HEADER_VAL);
 
     va_start(args, fmt);
     // https://stackoverflow.com/questions/150543/forward-an-invocation-of-a-variadic-function-in-c
@@ -165,23 +189,87 @@ void log_sprintf(int module_idx,
     // variable number of arguments.  These functions do not call the va_end macro.  Be‐
     // cause they invoke the va_arg macro, the value of ap is undefined after the  call.
     // See stdarg(3).
-    pos += vsnprintf(modules_s[module_idx].buffer+pos, MAX_BUFFER_SIZE, fmt, args);
-    if (pos >= MAX_BUFFER_SIZE) {
-        modules_s[module_idx].buffer[pos-1] = '\n';
-        modules_s[module_idx].buffer[pos] = '\0';
+    // 
+    // The  functions  snprintf()  and	vsnprintf() write at most size bytes (including the
+    // terminating null byte ('\0')) to str.
+    //
+    // The  functions snprintf() and vsnprintf() do not write more than size bytes (includ‐
+    // ing the terminating null byte ('\0')).  If the output  was  truncated  due  to  this
+    // limit,  then the return value is the number of characters (excluding the terminating
+    // null byte) which would have been written to the final string  if  enough  space	had
+    // been  available.   Thus,  a  return  value of size or more means that the output was
+    // truncated.  (See also below under NOTES.)
+    pos += vsnprintf(log_s->modules[module_idx].buffer+pos, DEFAULT_BUFFER_SIZE-1, fmt, args);
+    if (pos >= DEFAULT_BUFFER_SIZE-1) {
+        log_s->modules[module_idx].buffer[DEFAULT_BUFFER_SIZE-2] = '\n';
+        log_s->modules[module_idx].buffer[DEFAULT_BUFFER_SIZE-1] = '\0';
     }
-    modules_s[module_idx].buffer[pos] = '\n';
-    modules_s[module_idx].buffer[pos+1] = '\0';
+    log_s->modules[module_idx].buffer[pos] = '\n';
+    log_s->modules[module_idx].buffer[pos+1] = '\0';
+
+    va_end(args);
+}
+
+//TODO this needs functions for encoding labels.
+void mr_log_sprintf(size_t module_idx,
+                    int level,
+                    const char* func,
+                    const char* file,
+                    int line,
+                    const char *msg, ...) {
+    va_list args;
+    char error[128], *label;
+    struct timespec ts;
+    struct tm tm;
+
+    if (module_idx >= log_s->len) {
+        sprintf(error, "logging module %lu is not initialized.\n", module_idx);
+        perror(error);
+        return;
+    }
+
+    if (log_s->modules[module_idx].config.level < level) {
+        return;
+    }
+
+    clock_gettime(CLOCK_REALTIME, &ts);
+    gmtime_r(&(ts.tv_sec), &tm);
+
+    int pos = 0;
+    char *buf = log_s->modules[module_idx].buffer;
+    MR_SNPRINTF("{");
+    //TODO: make the timestamp format configurable
+    //TODO: in fact, this looks really repeatable code, so I assume I can
+    //put these values in some vectors and then iterate through them
+    MR_SNPRINTF("\"ts\":\""LOG_TIME_FORMAT"\",", LOG_TIME_VALUE(tm, ts));
+    MR_SNPRINTF("\"hostname\":\"%s\",", hostname_s);
+    MR_SNPRINTF("\"app\":\"%s\",", appname_s);
+    MR_SNPRINTF("\"level\":\"%s\",", LOG_LEVEL_VALUE(level));
+    MR_SNPRINTF("\"location\":\"%s():%s:%u\",", func, file, line);
+    MR_SNPRINTF("\"thread\":\"%s\",", threadname_s);
+
+    va_start(args, msg);
+    MR_SNPRINTF("\"msg\":\"%s\"", msg);
+
+    while(!strcmp(label, MR_LOG_TERMINATOR)) {
+        MR_SNPRINTF(",");
+        label = va_arg(args, char*);
+        MR_SNPRINTF("%s", label);
+    }
+
+    log_s->modules[module_idx].buffer[pos] = '}';
+    log_s->modules[module_idx].buffer[pos+1] = '\n';
+    log_s->modules[module_idx].buffer[pos+2] = '\0';
 
     va_end(args);
 }
 
 void log_set_Level(int idx, uint8_t lvl) {
-    modules_s[idx].config.level = lvl;
+    log_s->modules[idx].config.level = lvl;
 }
 
 uint8_t log_get_level(int idx) {
-    return modules_s[idx].config.level;
+    return log_s->modules[idx].config.level;
 }
 
 const char* log_get_level_string(uint8_t level) {
@@ -214,10 +302,11 @@ const char* log_get_level_string(uint8_t level) {
 }
 
 void log_close(int idx) {
-    if (modules_s[idx].file_fd != -1) {
+    if (log_s->modules[idx].file_fd != -1) {
         // TODO what happens if buffer isn't flushed?
-        if (close(modules_s[idx].file_fd == -1)) {
+        if (close(log_s->modules[idx].file_fd == -1)) {
             perror("closing the log file\n");
         }
     }
+    //TODO free all memory here
 }

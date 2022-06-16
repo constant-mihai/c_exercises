@@ -11,7 +11,7 @@ extern "C" {
 class TestHeap: public ::testing::Test {
     protected:
         void SetUp() override {
-            LOG_ADD_DEFAULT_MODULE("heap-test", L_INFO);
+            LOG_CREATE_DEFAULT("heap-test", L_INFO);
         }
 
         // void TearDown() override {}

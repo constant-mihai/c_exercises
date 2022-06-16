@@ -9,7 +9,7 @@ extern "C" {
 class TestSelectSort: public ::testing::Test {
     protected:
         void SetUp() override {
-            LOG_ADD_DEFAULT_MODULE("select-sort-test", L_INFO);
+            LOG_CREATE_DEFAULT("select-sort-test", L_INFO);
         }
 
         // void TearDown() override {}

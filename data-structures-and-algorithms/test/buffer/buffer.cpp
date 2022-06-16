@@ -8,7 +8,7 @@ extern "C" {
 class TestBuffer: public ::testing::Test {
     protected:
         void SetUp() override {
-            LOG_ADD_DEFAULT_MODULE("buffer-test", L_INFO);
+            LOG_CREATE_DEFAULT("buffer-test", L_INFO);
         }
 
         // void TearDown() override {}

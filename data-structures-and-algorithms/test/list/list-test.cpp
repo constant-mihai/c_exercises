@@ -9,7 +9,7 @@ extern "C" {
 class TestList: public ::testing::Test {
     protected:
         void SetUp() override {
-            LOG_ADD_DEFAULT_MODULE("list-test", L_INFO);
+            LOG_CREATE_DEFAULT("list-test", L_INFO);
         }
 
         // void TearDown() override {}

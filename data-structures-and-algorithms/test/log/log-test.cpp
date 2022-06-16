@@ -9,8 +9,7 @@ extern "C" {
 void *thread_func(void *arg)
 {
     const char *str = (const char*) arg;
-    LOG_ADD_DEFAULT_MODULE("log-test", L_INFO);
-    log_set_thread_name(str);
+    LOG_CREATE_DEFAULT("log-test", L_INFO);
 
     if (!strcmp(str, "thread 1")) {
         sleep(1.5);
@@ -53,4 +52,10 @@ TEST_F(TestLog, TestCreate) {
 
    status = pthread_join (thread_ids[1], &thread_result);
    if (status != 0) err_quit ("Join thread %s", strerror(status));
+}
+
+TEST_F(TestLog, TestMrLog) {
+    LOG_CREATE_DEFAULT("log-test", L_INFO);
+    //TODO re-write this after implementing encoders
+    MR_LOG("test log", "\"label1\": \"val1\"");
 }

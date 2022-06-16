@@ -9,7 +9,7 @@ extern "C" {
 class TestTrieDict: public ::testing::Test {
     protected:
         void SetUp() override {
-            LOG_ADD_DEFAULT_MODULE("trie-dict-test", L_INFO);
+            LOG_CREATE_DEFAULT("trie-dict-test", L_INFO);
         }
 
         // void TearDown() override {}

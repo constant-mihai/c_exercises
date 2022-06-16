@@ -9,7 +9,7 @@ extern "C" {
 class TestBinaryTree: public ::testing::Test {
     protected:
         void SetUp() override {
-            LOG_ADD_DEFAULT_MODULE("btree-tests", L_INFO);
+            LOG_CREATE_DEFAULT("btree-tests", L_INFO);
         }
 
         // void TearDown() override {}
