@@ -49,4 +49,3 @@ void log_set_Level(int idx, uint8_t lvl);
 uint8_t log_get_level();
 const char* log_get_level_string(uint8_t level);
 void log_destroy();
-void log_close(); //TODO: deprecate this

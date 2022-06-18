@@ -64,45 +64,38 @@
 //
 // MR log Module based
 //
-#define MR_LOG_AT(module_name, msg, ...) \
+#define MR_LOG_AT(log_mod_idx, msg, ...) \
     do{\
-        int log_mod_idx = log_find_module(module_name);\
         if (log_mod_idx > 0) MR_PRINTF(log_mod_idx, L_INFO, msg, ##__VA_ARGS__);\
     } while(0)
 
-#define MR_LOG_CRIT_AT(module_name, msg, ...) \
+#define MR_LOG_CRIT_AT(log_mod_idx, msg, ...) \
     do{\
-        int log_mod_idx = log_find_module(module_name);\
         if (log_mod_idx > 0) MR_PRINTF(log_mod_idx, L_CRIT, msg, ##__VA_ARGS__);\
     } while(0)
 
-#define MR_LOG_ERR_AT(module_name, msg, ...) \
+#define MR_LOG_ERR_AT(log_mod_idx, msg, ...) \
     do{\
-        int log_mod_idx = log_find_module(module_name);\
         if (log_mod_idx > 0) MR_PRINTF(log_mod_idx, L_ERR, msg, ##__VA_ARGS__);\
     } while(0)
 
-#define MR_LOG_WARN_AT(module_name, msg, ...) \
+#define MR_LOG_WARN_AT(log_mod_idx, msg, ...) \
     do{\
-        int log_mod_idx = log_find_module(module_name);\
         if (log_mod_idx > 0) MR_PRINTF(log_mod_idx, L_WARN, msg, ##__VA_ARGS__);\
     } while(0)
 
-#define MR_LOG_INFO_AT(module_name, msg, ...) \
+#define MR_LOG_INFO_AT(log_mod_idx, msg, ...) \
     do{\
-        int log_mod_idx = log_find_module(module_name);\
         if (log_mod_idx > 0) MR_PRINTF(log_mod_idx, L_INFO, msg, ##__VA_ARGS__);\
     } while(0)
 
-#define MR_LOG_DBG_AT(module_name, msg, ...) \
+#define MR_LOG_DBG_AT(log_mod_idx, msg, ...) \
     do{\
-        int log_mod_idx = log_find_module_AT(module_name);\
         if (log_mod_idx > 0) MR_PRINTF(log_mod_idx, L_DBG, msg, ##__VA_ARGS__);\
     } while(0)
 
-#define MR_LOG_MEM_AT(module_name, msg, ...) \
+#define MR_LOG_MEM_AT(log_mod_idx, msg, ...) \
     do{\
-        int log_mod_idx = log_find_module_AT(module_name);\
         MR_PRINTF(log_mod_idx, L_MEM, msg, ##__VA_ARGS__);\
     } while(0)
 

@@ -117,6 +117,7 @@ int log_add_module(const char* name, log_config_t config) {
     }
 
     _log_set_config(&log_s->modules[log_s->len].config, &config);
+    log_s->modules[log_s->len].file_fd = -1;
     if (log_s->modules[log_s->len].config.filename != NULL) {
         log_s->modules[log_s->len].file_fd = log_open_fd(log_s->modules[log_s->len].config.filename);
     }
@@ -304,12 +305,25 @@ const char* log_get_level_string(uint8_t level) {
     }
 }
 
-void log_close(int idx) {
-    if (log_s->modules[idx].file_fd != -1) {
-        // TODO what happens if buffer isn't flushed?
-        if (close(log_s->modules[idx].file_fd == -1)) {
-            perror("closing the log file\n");
+void log_destroy() {
+    for (size_t i=0; i<log_s->cap; i++) {
+        if (log_s->modules[i].name != NULL) {
+            if (log_s->modules[i].config.filename != NULL && log_s->modules[i].file_fd != -1) {
+                if (close(log_s->modules[i].file_fd == -1)) {
+                    perror("closing the log file\n");
+                }
+                free(log_s->modules[i].config.filename);
+            }
+            free(log_s->modules[i].name);
         }
+        free(log_s->modules[i].buffer);
     }
-    //TODO free all memory here
+
+    free(log_s->modules);
+    log_s->len = 0;
+    log_s->cap = 0;
+
+    free(hostname_s);
+    free(appname_s);
+    free(threadname_s);
 }

@@ -16,7 +16,9 @@ void *thread_func(void *arg)
         sleep(1.5);
     }
 
-    LOG_AT("log-test", "log message: %s", str);
+    int log_test_idx = log_find_module("log-test");
+    assert(log_test_idx > 0);
+    LOG_AT(log_test_idx, "log message: %s", str);
 
     return NULL;
 }
@@ -28,6 +30,9 @@ class TestLog: public ::testing::Test {
     protected:
         void SetUp() override
         {
+            log_create("test-log", "main");
+            LOG_ADD_MODULE("default", 1, L_INFO, NULL);
+
             m_old_stdout = dup(STDOUT_FILENO);
             ASSERT_TRUE(0 == pipe2(m_pipe, O_NONBLOCK));
             ASSERT_TRUE(STDOUT_FILENO == dup2(m_pipe[1], STDOUT_FILENO));
@@ -38,6 +43,8 @@ class TestLog: public ::testing::Test {
         {
             ASSERT_TRUE(STDOUT_FILENO == dup2(m_old_stdout, STDOUT_FILENO));
             printf("%s", m_failure_msg);
+
+            log_destroy();
         }
 
         int read_pipe(char *buf) {
@@ -181,9 +188,6 @@ TEST_F(TestLog, TestSprintf) {
     char *buf = (char*)malloc(2 * DEFAULT_BUFFER_SIZE * sizeof(char));
     memset((void*)buf, 0x51, 2 * DEFAULT_BUFFER_SIZE);
 
-    log_create("unit-test-test-sprintf", "main");
-    LOG_ADD_MODULE("test-sprintf", 1, L_INFO, NULL);
-
     LOG("%s", buf);
     assert_log_overflow(__func__, __LINE__);
 
@@ -198,9 +202,6 @@ TEST_F(TestLog, TestSprintf) {
 TEST_F(TestLog, TestMrLog) {
     char *buf = (char*)malloc(2 * DEFAULT_BUFFER_SIZE * sizeof(char));
     memset((void*)buf, 0x51, 2 * DEFAULT_BUFFER_SIZE);
-
-    log_create("unit-test", "main");
-    LOG_ADD_MODULE("test-mr-log", 1, L_INFO, NULL);
 
     MR_LOG("test log", buf);
     assert_log_overflow(__func__, __LINE__);

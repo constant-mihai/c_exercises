@@ -85,49 +85,42 @@
 //
 // Module based
 //
-#define LOG_AT(module_name, msg, ...) \
+#define LOG_AT(log_mod_idx, msg, ...) \
     do{\
-        int log_mod_idx = log_find_module(module_name);\
         if (log_mod_idx > 0) PRINTF(log_mod_idx, L_INFO, msg, ##__VA_ARGS__);\
     } while(0)
 
-#define LOG_CRIT_AT(module_name, msg, ...) \
+#define LOG_CRIT_AT(log_mod_idx, msg, ...) \
     do{\
-        int log_mod_idx = log_find_module(module_name);\
         if (log_mod_idx > 0) PRINTF(log_mod_idx, L_CRIT, msg, ##__VA_ARGS__);\
     } while(0)
 
-#define LOG_ERR_AT(module_name, msg, ...) \
+#define LOG_ERR_AT(log_mod_idx, msg, ...) \
     do{\
-        int log_mod_idx = log_find_module(module_name);\
         if (log_mod_idx > 0) PRINTF(log_mod_idx, L_ERR, msg, ##__VA_ARGS__);\
     } while(0)
 
-#define LOG_WARN_AT(module_name, msg, ...) \
+#define LOG_WARN_AT(log_mod_idx, msg, ...) \
     do{\
-        int log_mod_idx = log_find_module(module_name);\
         if (log_mod_idx > 0) PRINTF(log_mod_idx, L_WARN, msg, ##__VA_ARGS__);\
     } while(0)
 
-#define LOG_INFO_AT(module_name, msg, ...) \
+#define LOG_INFO_AT(log_mod_idx, msg, ...) \
     do{\
-        int log_mod_idx = log_find_module(module_name);\
         if (log_mod_idx > 0) PRINTF(log_mod_idx, L_INFO, msg, ##__VA_ARGS__);\
     } while(0)
 
-#define LOG_DBG_AT(module_name, msg, ...) \
+#define LOG_DBG_AT(log_mod_idx, msg, ...) \
     do{\
-        int log_mod_idx = log_find_module_AT(module_name);\
         if (log_mod_idx > 0) PRINTF(log_mod_idx, L_DBG, msg, ##__VA_ARGS__);\
     } while(0)
 
-#define LOG_MEM_AT(module_name, msg, ...) \
+#define LOG_MEM_AT(log_mod_idx, msg, ...) \
     do{\
-        int log_mod_idx = log_find_module_AT(module_name);\
         PRINTF(log_mod_idx, L_MEM, msg, ##__VA_ARGS__);\
     } while(0)
 
-#define LOG_CREATE_DEFAULT(module_name, loglvl) \
+#define LOG_CREATE_DEFAULT(log_mod_idx, loglvl) \
     log_create("no-app-name-provided", "main"); \
     do { \
         log_config_t log_config = { \
@@ -135,16 +128,16 @@
             .level = loglvl, \
             .filename = NULL \
         }; \
-        log_add_module(module_name, log_config); \
+        log_add_module(log_mod_idx, log_config); \
     } while(0)
 
-#define LOG_ADD_MODULE(module_name, ltc, loglvl, file_name) \
+#define LOG_ADD_MODULE(log_mod_idx, ltc, loglvl, file_name) \
     do { \
         log_config_t log_config = { \
             .log_to_console = ltc, \
             .level = loglvl, \
             .filename = file_name \
         }; \
-        log_add_module(module_name, log_config); \
+        log_add_module(log_mod_idx, log_config); \
     } while(0)
 
