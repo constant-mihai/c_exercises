@@ -22,7 +22,6 @@ typedef struct log {
 
 static char* hostname_s;
 static char* appname_s;
-//TODO need to think about thread names
 static __thread char* threadname_s;
 static __thread int initialized_s = 0;
 static __thread log_t *log_s;
@@ -51,13 +50,15 @@ void _log_init_modules(size_t start, size_t buf_size) {
 
 void log_create(const char* appname, const char* threadname) {
     if (initialized_s == 0) {
+        log_s = (log_t*) calloc(1, sizeof(log_t)); 
+
         hostname_s = malloc(HOST_NAME_MAX*sizeof(char));
         gethostname(hostname_s, HOST_NAME_MAX);
 
         appname_s = malloc((strlen(appname)+1)*sizeof(char));
         strcpy(appname_s, appname);
 
-        threadname_s = malloc((strlen(threadname_s)+1)*sizeof(char));
+        threadname_s = malloc((strlen(threadname)+1)*sizeof(char));
         strcpy(threadname_s, threadname);
 
         log_s->cap = DEFAULT_MODULES_NUM;
@@ -199,7 +200,7 @@ void log_sprintf(size_t module_idx,
     // null byte) which would have been written to the final string  if  enough  space	had
     // been  available.   Thus,  a  return  value of size or more means that the output was
     // truncated.  (See also below under NOTES.)
-    pos += vsnprintf(log_s->modules[module_idx].buffer+pos, DEFAULT_BUFFER_SIZE-1, fmt, args);
+    pos += vsnprintf(log_s->modules[module_idx].buffer+pos, DEFAULT_BUFFER_SIZE-pos-1, fmt, args);
     if (pos >= DEFAULT_BUFFER_SIZE-1) {
         log_s->modules[module_idx].buffer[DEFAULT_BUFFER_SIZE-2] = '\n';
         log_s->modules[module_idx].buffer[DEFAULT_BUFFER_SIZE-1] = '\0';
@@ -251,12 +252,14 @@ void mr_log_sprintf(size_t module_idx,
     va_start(args, msg);
     MR_SNPRINTF("\"msg\":\"%s\"", msg);
 
-    while(!strcmp(label, MR_LOG_TERMINATOR)) {
-        MR_SNPRINTF(",");
-        label = va_arg(args, char*);
-        MR_SNPRINTF("%s", label);
+    label = va_arg(args, char*);
+    if (label != NULL) {
+        while(strcmp(label, MR_LOG_TERMINATOR)) {
+            MR_SNPRINTF(",");
+            MR_SNPRINTF("%s", label);
+            label = va_arg(args, char*);
+        }
     }
-
     log_s->modules[module_idx].buffer[pos] = '}';
     log_s->modules[module_idx].buffer[pos+1] = '\n';
     log_s->modules[module_idx].buffer[pos+2] = '\0';

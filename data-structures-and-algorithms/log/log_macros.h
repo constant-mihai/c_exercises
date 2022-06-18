@@ -138,12 +138,12 @@
         log_add_module(module_name, log_config); \
     } while(0)
 
-#define LOG_ADD_MODULE(module_name, ltc, loglvl, filename) \
+#define LOG_ADD_MODULE(module_name, ltc, loglvl, file_name) \
     do { \
         log_config_t log_config = { \
             .log_to_console = ltc, \
             .level = loglvl, \
-            .filename = filename \
+            .filename = file_name \
         }; \
         log_add_module(module_name, log_config); \
     } while(0)
