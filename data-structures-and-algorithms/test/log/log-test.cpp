@@ -68,7 +68,7 @@ class TestLog: public ::testing::Test {
 
             read_bytes = read_pipe(read_buffer);
 
-            if (read_bytes != DEFAULT_BUFFER_SIZE-1) {
+            if (read_bytes != DEFAULT_BUFFER_SIZE) {
                 p += sprintf(m_failure_msg + p,
                             "Failed comparing strings. Function: %s, line: %d. ",
                             func,
@@ -180,34 +180,40 @@ TEST_F(TestLog, TestSprintf) {
     memset((void*)buf, 0x51, 2 * DEFAULT_BUFFER_SIZE);
 
     LOG("%s", buf);
-    assert_log_overflow(__func__, __LINE__);
+    ASSERT_TRUE(0 == assert_log_overflow(__func__, __LINE__));
 
     const char *a_test_message = "a test message";
     ASSERT_LOG("This is %s", a_test_message);
 }
 
-#define ASSERT_MR_LOG(lvl, expected_str, msg, ...) \
-    MR_LOG##lvl(msg, ##__VA_ARGS__); \
+#define ASSERT_MR_LOG(lvl, expected_str, msg, body) \
+    MR_LOG##lvl(msg); \
+    do { body; } while (0);\
+    MR_LOG_END();\
     ASSERT_TRUE(assert_mr_log(__func__, __LINE__, expected_str) == 0)
 
-#define ASSERT_MR_LOG_AT(lvl, module_idx, expected_str, msg, ...) \
-    MR_LOG##lvl(module_idx, msg, ##__VA_ARGS__); \
+#define ASSERT_MR_LOG_AT(lvl, module_idx, expected_str, msg, body) \
+    MR_LOG##lvl(module_idx, msg); \
+    do { body; } while (0);\
+    MR_LOG_END();\
     ASSERT_TRUE(assert_mr_log(__func__, __LINE__, expected_str) == 0)
 
 TEST_F(TestLog, TestMrLog) {
     char *buf = (char*)malloc(2 * DEFAULT_BUFFER_SIZE * sizeof(char));
     memset((void*)buf, 0x51, 2 * DEFAULT_BUFFER_SIZE);
 
-    MR_LOG("test log", buf);
-    assert_log_overflow(__func__, __LINE__);
+    MR_LOG(buf);
+    MR_LOG_END();
+
+    ASSERT_TRUE(0 == assert_log_overflow(__func__, __LINE__));
 
     ASSERT_MR_LOG(_ERR,
                   "\"error\":\"error value\"",
                   "test log",
-                  mr_log_error(LOG_DEFAULT_MODULE_INDEX, "error value"));
+                  ({ mr_log_error("error value"); }));
     ASSERT_MR_LOG_AT(_ERR_AT,
                      LOG_DEFAULT_MODULE_INDEX,
                      "\"error\":\"error value\"",
                      "test log",
-                     mr_log_error(LOG_DEFAULT_MODULE_INDEX, "error value"));
+                     ({ mr_log_error("error value"); }));
 }

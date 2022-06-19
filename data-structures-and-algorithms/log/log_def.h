@@ -25,6 +25,7 @@ typedef struct {
     char *filename;
 } log_config_t;
 
+
 void log_sprintf(size_t module_idx,
                  int level,
                  const char* func,
@@ -48,6 +49,8 @@ void mr_log_preamble(size_t module_idx,
                      const char* func,
                      const char* file,
                      int line,
-                     const char *msg, ...);
+                     const char *msg);
 
-int mr_log_error(size_t module_idx, const char* error);
+int mr_log_error(const char* error);
+int mr_log_buffer(const char* label, int len, const char* buf);
+int mr_log_uint64(const char* label, uint64_t val);

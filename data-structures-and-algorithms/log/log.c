@@ -26,6 +26,7 @@ static char* appname_s;
 static __thread char* threadname_s;
 static __thread int initialized_s = 0;
 static __thread log_t *log_s;
+static __thread size_t current_module_idx_s;
 
 int log_open_fd(const char* filename) {
     int fd = open (filename, O_WRONLY);
@@ -129,29 +130,41 @@ int log_add_module(const char* name, log_config_t config) {
     return log_s->len-1;
 }
 
-void _log_flush(size_t idx) {
-    if (idx >= log_s->len) {
+void _log_flush(size_t module_idx) {
+    if (module_idx >= log_s->len) {
         return;
     }
 
-    if (log_s->modules[idx].config.log_to_console == 1) {
-        printf("%s", log_s->modules[idx].buffer);
+    if (log_s->modules[module_idx].config.log_to_console == 1) {
+        printf("%s", log_s->modules[module_idx].buffer);
     }
 
-    if (log_s->modules[idx].file_fd > 0) {
-        int seek = lseek(log_s->modules[idx].file_fd, 0, SEEK_END);
+    if (log_s->modules[module_idx].file_fd > 0) {
+        int seek = lseek(log_s->modules[module_idx].file_fd, 0, SEEK_END);
         if (seek == -1) {
             perror("error appending to log file.\n");
         }
-        int nr = write(log_s->modules[idx].file_fd,
-                       log_s->modules[idx].buffer,
-                       strlen(log_s->modules[idx].buffer));
+        int nr = write(log_s->modules[module_idx].file_fd,
+                       log_s->modules[module_idx].buffer,
+                       strlen(log_s->modules[module_idx].buffer));
         if (nr == -1) {
             perror("write error\n");
-        } 
+        }
     }
 
     return;
+}
+
+void _mr_log_flush() {
+    size_t module_idx = current_module_idx_s;
+    log_s->modules[module_idx].buffer[log_s->modules[module_idx].mr_log_pos++] = '}';
+    log_s->modules[module_idx].buffer[log_s->modules[module_idx].mr_log_pos++] = '\n';
+    log_s->modules[module_idx].buffer[log_s->modules[module_idx].mr_log_pos] = '\0';
+
+    _log_flush(current_module_idx_s);
+
+    current_module_idx_s = 0;
+    log_s->modules[current_module_idx_s].mr_log_pos = 0;
 }
 
 void log_sprintf(size_t module_idx,
@@ -275,18 +288,17 @@ void mr_log_preamble(size_t module_idx,
                      const char* func,
                      const char* file,
                      int line,
-                     const char* msg, ...) {
+                     const char* msg) {
     char error[128];
     struct timespec ts;
     struct tm tm;
-    va_list args;
-    int encoder_result;
 
     if (module_idx >= log_s->len) {
         sprintf(error, "logging module %lu is not initialized.\n", module_idx);
         perror(error);
         return;
     }
+    current_module_idx_s = module_idx;
 
     if (log_s->modules[module_idx].config.level < level) {
         return;
@@ -295,7 +307,6 @@ void mr_log_preamble(size_t module_idx,
     clock_gettime(CLOCK_REALTIME, &ts);
     gmtime_r(&(ts.tv_sec), &tm);
 
-    va_start(args, msg);
     //TODO: make the timestamp format configurable
     //TODO: in fact, this looks really repeatable code, so I assume I can
     //put these values in some vectors and then iterate through them
@@ -307,28 +318,33 @@ void mr_log_preamble(size_t module_idx,
     MR_SNPRINTF(module_idx, "\"thread\":\"%s\"", threadname_s);
 
     MR_SNPRINTF(module_idx, "\"msg\":\"%s\"", msg);
-
-    encoder_result = va_arg(args, int);
-    while(encoder_result != MR_LOG_TERMINATOR) {
-        if (encoder_result != 0) {
-            //TODO: can the encoder return error?
-            //what do I do if it does?
-        }
-        encoder_result = va_arg(args, int);
-    }
-
-    log_s->modules[module_idx].buffer[log_s->modules[module_idx].mr_log_pos++] = '}';
-    log_s->modules[module_idx].buffer[log_s->modules[module_idx].mr_log_pos++] = '\n';
-    log_s->modules[module_idx].buffer[log_s->modules[module_idx].mr_log_pos++] = '\0';
-
 done:
-    va_end(args);
-    log_s->modules[module_idx].mr_log_pos = 0;
+    return;
 }
 
-int mr_log_error(size_t module_idx, const char* error) {
+int mr_log_error(const char* error) {
     int ret = 0;
-    MR_SNPRINTF_RETVAL(ret, module_idx, "\"error\":\"%s\"", error);
+    MR_SNPRINTF_RETVAL(ret, current_module_idx_s, "\"error\":\"%s\"", error);
+done:
+    return ret;
+}
+
+int mr_log_buffer(const char* label, int len, const char* buf) {
+    int ret = 0;
+    MR_SNPRINTF_RETVAL(ret,
+                       current_module_idx_s,
+                       "\"%s\":\"%.*s\"",
+                       label, len, buf);
+done:
+    return ret;
+}
+
+int mr_log_uint64(const char* label, uint64_t val) {
+    int ret = 0;
+    MR_SNPRINTF_RETVAL(ret,
+                       current_module_idx_s,
+                       "\"%s\":\"%ld\"",
+                       label, val);
 done:
     return ret;
 }
