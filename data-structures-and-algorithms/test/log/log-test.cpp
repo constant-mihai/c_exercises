@@ -101,11 +101,11 @@ class TestLog: public ::testing::Test {
 
             if (strstr(read_buffer, verification_buffer) == NULL) {
                 p += sprintf(m_failure_msg + p,
-                            "Failed comparing strings. Function: %s, line: %d. ",
+                            "Log test failed. Function: %s, line: %d. ",
                             func,
                             line);
                 p += sprintf(m_failure_msg + p,
-                            "Actual: %s, expected: %s\n",
+                            "Actual log message: %s, Expected substring: %s\n",
                             read_buffer,
                             verification_buffer);
                 return 1;
@@ -117,32 +117,23 @@ class TestLog: public ::testing::Test {
         int assert_mr_log(
                  const char* func,
                  int line,
-                 int labels_num,
-                 const char *fmt, ...)
+                 const char* expected_str)
         {
-            int read_bytes = 0, n = 0, p = 0;
-            char read_buffer[VERIFICATION_BUFFER_SIZE], verification_buffer[VERIFICATION_BUFFER_SIZE];
+            int read_bytes = 0, p = 0;
+            char read_buffer[VERIFICATION_BUFFER_SIZE];
 
             read_bytes = read_pipe(read_buffer);
             (void)read_bytes; //TODO: do i really need this?
 
-            va_list args;
-            va_start(args, fmt);
-            for (int i=0; i<labels_num; i++) {
-                char *label = va_arg(args, char*);
-                n += snprintf(verification_buffer + n, VERIFICATION_BUFFER_SIZE - n, ",%s", label);
-            }
-            va_end(args);
-
-            if (strstr(read_buffer, verification_buffer) == NULL) {
+            if (strstr(read_buffer, expected_str) == NULL) {
                 p += sprintf(m_failure_msg + p,
-                            "Failed comparing strings. Function: %s, line: %d. ",
+                            "Log test failed. Function: %s, line: %d. ",
                             func,
                             line);
                 p += sprintf(m_failure_msg + p,
-                            "Actual: %s, expected: %s\n",
+                            "Actual log message: %s, Expected substring: %s\n",
                             read_buffer,
-                            verification_buffer);
+                            expected_str);
                 return 1;
             }
 
@@ -195,9 +186,13 @@ TEST_F(TestLog, TestSprintf) {
     ASSERT_LOG("This is %s", a_test_message);
 }
 
-#define ASSERT_MR_LOG(msg, labels_num, ...) \
-    MR_LOG(msg, ##__VA_ARGS__); \
-    ASSERT_TRUE(assert_mr_log(__func__, __LINE__, labels_num, msg, ##__VA_ARGS__) == 0)
+#define ASSERT_MR_LOG(lvl, expected_str, msg, ...) \
+    MR_LOG##lvl(msg, ##__VA_ARGS__); \
+    ASSERT_TRUE(assert_mr_log(__func__, __LINE__, expected_str) == 0)
+
+#define ASSERT_MR_LOG_AT(lvl, module_idx, expected_str, msg, ...) \
+    MR_LOG##lvl(module_idx, msg, ##__VA_ARGS__); \
+    ASSERT_TRUE(assert_mr_log(__func__, __LINE__, expected_str) == 0)
 
 TEST_F(TestLog, TestMrLog) {
     char *buf = (char*)malloc(2 * DEFAULT_BUFFER_SIZE * sizeof(char));
@@ -206,5 +201,13 @@ TEST_F(TestLog, TestMrLog) {
     MR_LOG("test log", buf);
     assert_log_overflow(__func__, __LINE__);
 
-    ASSERT_MR_LOG("test log", 1, "\"label1\": \"val1\"");
+    ASSERT_MR_LOG(_ERR,
+                  "\"error\":\"error value\"",
+                  "test log",
+                  mr_log_error(LOG_DEFAULT_MODULE_INDEX, "error value"));
+    ASSERT_MR_LOG_AT(_ERR_AT,
+                     LOG_DEFAULT_MODULE_INDEX,
+                     "\"error\":\"error value\"",
+                     "test log",
+                     mr_log_error(LOG_DEFAULT_MODULE_INDEX, "error value"));
 }

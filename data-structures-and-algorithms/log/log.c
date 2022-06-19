@@ -10,6 +10,7 @@
 typedef struct log_module {
     char *name;
     char *buffer;
+    int mr_log_pos;
     int file_fd;
     log_config_t config;
 } log_module_t;
@@ -135,7 +136,6 @@ void _log_flush(size_t idx) {
 
     if (log_s->modules[idx].config.log_to_console == 1) {
         printf("%s", log_s->modules[idx].buffer);
-        return;
     }
 
     if (log_s->modules[idx].file_fd > 0) {
@@ -149,8 +149,6 @@ void _log_flush(size_t idx) {
         if (nr == -1) {
             perror("write error\n");
         } 
-    } else {
-        perror("bad file descriptor\n");
     }
 
     return;
@@ -206,64 +204,8 @@ void log_sprintf(size_t module_idx,
         log_s->modules[module_idx].buffer[DEFAULT_BUFFER_SIZE-2] = '\n';
         log_s->modules[module_idx].buffer[DEFAULT_BUFFER_SIZE-1] = '\0';
     }
-    log_s->modules[module_idx].buffer[pos] = '\n';
-    log_s->modules[module_idx].buffer[pos+1] = '\0';
-
-    va_end(args);
-}
-
-//TODO this needs functions for encoding labels.
-void mr_log_sprintf(size_t module_idx,
-                    int level,
-                    const char* func,
-                    const char* file,
-                    int line,
-                    const char *msg, ...) {
-    va_list args;
-    char error[128], *label;
-    struct timespec ts;
-    struct tm tm;
-
-    if (module_idx >= log_s->len) {
-        sprintf(error, "logging module %lu is not initialized.\n", module_idx);
-        perror(error);
-        return;
-    }
-
-    if (log_s->modules[module_idx].config.level < level) {
-        return;
-    }
-
-    clock_gettime(CLOCK_REALTIME, &ts);
-    gmtime_r(&(ts.tv_sec), &tm);
-
-    int pos = 0;
-    char *buf = log_s->modules[module_idx].buffer;
-    MR_SNPRINTF("{");
-    //TODO: make the timestamp format configurable
-    //TODO: in fact, this looks really repeatable code, so I assume I can
-    //put these values in some vectors and then iterate through them
-    MR_SNPRINTF("\"ts\":\""LOG_TIME_FORMAT"\",", LOG_TIME_VALUE(tm, ts));
-    MR_SNPRINTF("\"hostname\":\"%s\",", hostname_s);
-    MR_SNPRINTF("\"app\":\"%s\",", appname_s);
-    MR_SNPRINTF("\"level\":\"%s\",", LOG_LEVEL_VALUE(level));
-    MR_SNPRINTF("\"location\":\"%s():%s:%u\",", func, file, line);
-    MR_SNPRINTF("\"thread\":\"%s\",", threadname_s);
-
-    va_start(args, msg);
-    MR_SNPRINTF("\"msg\":\"%s\"", msg);
-
-    label = va_arg(args, char*);
-    if (label != NULL) {
-        while(strcmp(label, MR_LOG_TERMINATOR)) {
-            MR_SNPRINTF(",");
-            MR_SNPRINTF("%s", label);
-            label = va_arg(args, char*);
-        }
-    }
-    log_s->modules[module_idx].buffer[pos] = '}';
-    log_s->modules[module_idx].buffer[pos+1] = '\n';
-    log_s->modules[module_idx].buffer[pos+2] = '\0';
+    log_s->modules[module_idx].buffer[pos++] = '\n';
+    log_s->modules[module_idx].buffer[pos++] = '\0';
 
     va_end(args);
 }
@@ -326,4 +268,67 @@ void log_destroy() {
     free(hostname_s);
     free(appname_s);
     free(threadname_s);
+}
+
+void mr_log_preamble(size_t module_idx,
+                     int level,
+                     const char* func,
+                     const char* file,
+                     int line,
+                     const char* msg, ...) {
+    char error[128];
+    struct timespec ts;
+    struct tm tm;
+    va_list args;
+    int encoder_result;
+
+    if (module_idx >= log_s->len) {
+        sprintf(error, "logging module %lu is not initialized.\n", module_idx);
+        perror(error);
+        return;
+    }
+
+    if (log_s->modules[module_idx].config.level < level) {
+        return;
+    }
+
+    clock_gettime(CLOCK_REALTIME, &ts);
+    gmtime_r(&(ts.tv_sec), &tm);
+
+    va_start(args, msg);
+    //TODO: make the timestamp format configurable
+    //TODO: in fact, this looks really repeatable code, so I assume I can
+    //put these values in some vectors and then iterate through them
+    MR_SNPRINTF(module_idx, "\"ts\":\""LOG_TIME_FORMAT"\"", LOG_TIME_VALUE(tm, ts));
+    MR_SNPRINTF(module_idx, "\"hostname\":\"%s\"", hostname_s);
+    MR_SNPRINTF(module_idx, "\"app\":\"%s\"", appname_s);
+    MR_SNPRINTF(module_idx, "\"level\":\"%s\"", LOG_LEVEL_VALUE(level));
+    MR_SNPRINTF(module_idx, "\"location\":\"%s():%s:%u\"", func, file, line);
+    MR_SNPRINTF(module_idx, "\"thread\":\"%s\"", threadname_s);
+
+    MR_SNPRINTF(module_idx, "\"msg\":\"%s\"", msg);
+
+    encoder_result = va_arg(args, int);
+    while(encoder_result != MR_LOG_TERMINATOR) {
+        if (encoder_result != 0) {
+            //TODO: can the encoder return error?
+            //what do I do if it does?
+        }
+        encoder_result = va_arg(args, int);
+    }
+
+    log_s->modules[module_idx].buffer[log_s->modules[module_idx].mr_log_pos++] = '}';
+    log_s->modules[module_idx].buffer[log_s->modules[module_idx].mr_log_pos++] = '\n';
+    log_s->modules[module_idx].buffer[log_s->modules[module_idx].mr_log_pos++] = '\0';
+
+done:
+    va_end(args);
+    log_s->modules[module_idx].mr_log_pos = 0;
+}
+
+int mr_log_error(size_t module_idx, const char* error) {
+    int ret = 0;
+    MR_SNPRINTF_RETVAL(ret, module_idx, "\"error\":\"%s\"", error);
+done:
+    return ret;
 }

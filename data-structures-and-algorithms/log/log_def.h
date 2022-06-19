@@ -32,14 +32,6 @@ void log_sprintf(size_t module_idx,
                  int line,
                  const char *fmt, ...);
 
-// machine readable
-void mr_log_sprintf(size_t module_idx,
-                    int level,
-                    const char* func,
-                    const char* file,
-                    int line,
-                    const char *fmt, ...);
-
 int log_find_module(const char* name);
 int log_open_fd(const char* filename);
 void log_init(const char* appname); // TODO: deprecate this
@@ -49,3 +41,13 @@ void log_set_Level(int idx, uint8_t lvl);
 uint8_t log_get_level();
 const char* log_get_level_string(uint8_t level);
 void log_destroy();
+
+// machine readable
+void mr_log_preamble(size_t module_idx,
+                     int level,
+                     const char* func,
+                     const char* file,
+                     int line,
+                     const char *msg, ...);
+
+int mr_log_error(size_t module_idx, const char* error);
