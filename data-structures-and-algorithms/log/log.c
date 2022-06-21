@@ -339,6 +339,17 @@ done:
     return ret;
 }
 
+int mr_log_string(const char* label, const char* buf) {
+    int ret = 0;
+    MR_SNPRINTF_RETVAL(ret,
+                       current_module_idx_s,
+                       "\"%s\":\"%s\"",
+                       label, buf);
+done:
+    return ret;
+
+}
+
 int mr_log_uint64(const char* label, uint64_t val) {
     int ret = 0;
     MR_SNPRINTF_RETVAL(ret,

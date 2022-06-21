@@ -53,4 +53,5 @@ void mr_log_preamble(size_t module_idx,
 
 int mr_log_error(const char* error);
 int mr_log_buffer(const char* label, int len, const char* buf);
+int mr_log_string(const char* label, const char* buf);
 int mr_log_uint64(const char* label, uint64_t val);
