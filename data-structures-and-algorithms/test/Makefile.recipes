@@ -1,6 +1,3 @@
-#TODO this will set verbose to have the value 1 or yes.
-#verbose = $(if $(or $(findstring yes,$(v)),$(findstring 1, $(v))),,@)
-
 # source files
 c_srcs := $(wildcard *.$(c_ext)) $(wildcard */*.$(c_ext))
 cpp_srcs := $(wildcard *.$(cpp_ext)) $(wildcard */*.$(cpp_ext))

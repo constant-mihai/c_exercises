@@ -7,7 +7,7 @@ include Makefile.in
 # Phony 
 # ----------------------------- #
 # ----------------------------- #
-.PHONY: all subdirs test-subdirs clean clean-all debug debug-shared shared help clean-subdirs
+.PHONY: all subdirs test-subdirs clean clean-all debug debug-shared shared help clean-subdirs coverage
 
 h := $(wildcard *.h) $(call deep_source_search,$(subdirs),$(h_ext))
 hpp := $(wildcard *.hpp) $(call deep_source_search,$(subdirs),$(hpp_ext))
@@ -85,6 +85,9 @@ test-subdirs: $(test_srcs) $(test_incs)
 		echo "cd $$s/" ; \
 		$(MAKE) $(PARALLEL) --no-print-directory -C $$s ; \
 	done;
+
+coverage:
+	gcovr --html-details coverage.html
 
 clean: clean-subdirs
 	rm -f *.o;
