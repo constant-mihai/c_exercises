@@ -7,7 +7,7 @@
     } while(0) \
 
 #define ASSERT_LOG(fmt, ...) \
-    LOG(fmt, ##__VA_ARGS__); \
+    HR_LOG(fmt, ##__VA_ARGS__); \
     ASSERT_TRUE(assert_log(__func__, __LINE__, fmt, ##__VA_ARGS__) == 0)
 
 #define ASSERT_MR_LOG(lvl, expected_str, msg, body) \

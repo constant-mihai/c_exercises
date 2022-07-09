@@ -36,7 +36,7 @@ TEST_F(TestList, TestOperations) {
     list_remove(l, (void*)&v[2]);
     list_foreach(l->head, print_node);
 
-    LOG("Test pop");
+    HR_LOG("Test pop");
     // {}
     list_insert(l, l->head, (void*)&v[0]);
     tmp = l->head;

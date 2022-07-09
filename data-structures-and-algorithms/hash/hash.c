@@ -31,7 +31,7 @@ void hash_destroy(hash_t *ht) {
 
     for(size_t i=0; i<ht->cap; i++) {
         if (ht->entries[i].key != NULL) {
-            LOG("removing: %s", ht->entries[i].key);
+            HR_LOG("removing: %s", ht->entries[i].key);
             free(ht->entries[i].key);
         }
     }
@@ -69,7 +69,7 @@ int hash_set(hash_t *ht, const char *key, void *value, size_t value_len) {
 
     while (ht->entries[index].key != NULL) {
         if (strcmp(key, ht->entries[index].key) == 0) {
-            LOG("Found key %s at index %ld", key, index);
+            HR_LOG("Found key %s at index %ld", key, index);
             memcpy(ht->entries[index].value, value, value_len);
             goto done;
         }
@@ -79,7 +79,7 @@ int hash_set(hash_t *ht, const char *key, void *value, size_t value_len) {
         }
     }
 
-    LOG("Inserting key %s at index %ld", key, index);
+    HR_LOG("Inserting key %s at index %ld", key, index);
     ht->entries[index].key = strdup(key);
     if (ht->entries[index].key == NULL) {
         return -1;
@@ -104,7 +104,7 @@ int hash_find_or_del(hash_t *ht, const char *key, void **value, int del) {
     const char *op = ((del == 1) ? "deleting index" : "found index");
     while (ht->entries[index].key != NULL) {
         if (strcmp(key, ht->entries[index].key) == 0) {
-            LOG("%s: %lu, key: %s",
+            HR_LOG("%s: %lu, key: %s",
                 op,
                 index,
                 ht->entries[index].key);

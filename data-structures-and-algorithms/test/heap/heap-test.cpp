@@ -34,9 +34,9 @@ TEST_F(TestHeap, TestInsert) {
     heap_insert(&heap, 7);
     heap_insert(&heap, 20);
 
-    LOG("Dump heap:");
+    HR_LOG("Dump heap:");
     for (int i=0; heap.last >= i; i++) {
-        LOG("%d", heap.array[i]);
+        HR_LOG("%d", heap.array[i]);
     }
 }
 
@@ -56,27 +56,27 @@ TEST_F(TestHeap, TestRemove) {
     heap_insert(&heap, 7);
     heap_insert(&heap, 20);
 
-    LOG("Dump heap:");
+    HR_LOG("Dump heap:");
     for (int i=0; heap.last >= i; i++) {
-        LOG("%d", heap.array[i]);
+        HR_LOG("%d", heap.array[i]);
     }
 
     heap_pop(&heap);
-    LOG("Dump heap:");
+    HR_LOG("Dump heap:");
     for (int i=0; heap.last >= i; i++) {
-        LOG("%d", heap.array[i]);
+        HR_LOG("%d", heap.array[i]);
     }
 
     heap_pop(&heap);
-    LOG("Dump heap:");
+    HR_LOG("Dump heap:");
     for (int i=0; heap.last >= i; i++) {
-        LOG("%d", heap.array[i]);
+        HR_LOG("%d", heap.array[i]);
     }
 
     heap_pop(&heap);
 
-    LOG("Dump heap:");
+    HR_LOG("Dump heap:");
     for (int i=0; heap.last >= i; i++) {
-        LOG("%d", heap.array[i]);
+        HR_LOG("%d", heap.array[i]);
     }
 }

@@ -30,9 +30,9 @@ TEST_F(TestTrieDict, TestSearch) {
     };
 
     for (size_t i=0; i < sizeof(word)/sizeof(word[0]); i++) {
-        LOG("inserting %s", word[i]);
+        HR_LOG("inserting %s", word[i]);
         if (trie_dict_insert(trie, word[i]) != 0) {
-            LOG("Error inserting %s", word[i]);
+            HR_LOG("Error inserting %s", word[i]);
         }
     }
 
@@ -59,7 +59,7 @@ TEST_F(TestTrieDict, TestRemove) {
 
     for (size_t i=0; i < sizeof(word)/sizeof(word[0]); i++) {
         if (trie_dict_insert(trie, word[i]) != 0) {
-            LOG("Error inserting %s", word[i]);
+            HR_LOG("Error inserting %s", word[i]);
         }
     }
 

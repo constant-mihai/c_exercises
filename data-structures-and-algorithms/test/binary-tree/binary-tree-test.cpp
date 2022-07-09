@@ -20,24 +20,24 @@ class TestBinaryTree: public ::testing::Test {
 
 TEST_F(TestBinaryTree, TestInsert) {
     node_t *root = NULL;
-    LOG("Insert root");
+    HR_LOG("Insert root");
     EXPECT_EQ(btree_insert(&root, NULL, 4), 0);
-    LOG("Insert 1");
+    HR_LOG("Insert 1");
     assert(btree_insert(&root, NULL, 1) == 0);
-    LOG("Insert 5");
+    HR_LOG("Insert 5");
     assert(btree_insert(&root, NULL, 5) == 0);
 
-    LOG("Assert root");
+    HR_LOG("Assert root");
     assert(root->val == 4);
     assert(root->up == NULL);
     assert(root->left != NULL);
     assert(root->right != NULL);
 
-    LOG("Assert left");
+    HR_LOG("Assert left");
     assert(root->left->up == root);
     assert(root->left->val == 1);
 
-    LOG("Assert right");
+    HR_LOG("Assert right");
     assert(root->right->up == root);
     assert(root->right->val == 5);
 }

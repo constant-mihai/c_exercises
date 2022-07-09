@@ -29,13 +29,13 @@ int trie_search_or_remove(node_t *trie,
     assert(i!=NULL);
     char c = ip[*i];
     int found = 0;
-    LOG("iteration %lu: %c", *i, c);
+    HR_LOG("iteration %lu: %c", *i, c);
 
     //TODO check here for syntax errors
     if ( c == '.' ) {
         (*i)++;
         c = ip[*i];
-        LOG("iteration    %c",  c);
+        HR_LOG("iteration    %c",  c);
     }
     int p = atoi(&c);
     // TODO if p is the first digit then check p != 0

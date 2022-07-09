@@ -92,7 +92,7 @@ node_t *list_pop(list_t *list) {
 }
 
 void print_node(void* value) {
-    LOG("value: %d", *(int*)value);
+    HR_LOG("value: %d", *(int*)value);
     return;
 }
 

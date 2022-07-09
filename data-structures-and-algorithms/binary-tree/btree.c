@@ -164,3 +164,7 @@ int btree_dump(node_t *n) {
 
     return 0;
 }
+
+void btree_destroy(node_t **n) {
+    (void) n;
+}

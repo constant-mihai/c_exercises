@@ -14,7 +14,7 @@ int validate_word(const char* word) {
     for (size_t i=0; i<strlen(word); i++) {
         c = word[i];
         if ( ! ((c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z'))) {
-            LOG("Error inserting %s;  %c: is not an alphabetic character.",
+            HR_LOG("Error inserting %s;  %c: is not an alphabetic character.",
                 word, c);
             return 0;
         }
@@ -28,7 +28,7 @@ node_t* trie_create() {
     trie->hash = hash_create(MAX_HASH_SIZE);
 
     if (trie->hash == NULL) {
-        LOG("Error creating hash.");
+        HR_LOG("Error creating hash.");
         free(trie);
         return NULL;
     }
@@ -43,7 +43,7 @@ node_t* set_child(node_t *trie, const char* c, int is_leaf) {
     node_t *child = 0;
     int hg = hash_get(trie->hash, c, (void*)&child);
     if (hg < 0) {
-        LOG("Error getting %s", c);
+        HR_LOG("Error getting %s", c);
         return NULL;
     }
 
@@ -52,7 +52,7 @@ node_t* set_child(node_t *trie, const char* c, int is_leaf) {
         child->hash = hash_create(MAX_HASH_SIZE);
         int hs = hash_set(trie->hash, c, (void*) child, sizeof(node_t));
         if (hs < 0) {
-            LOG("Error setting %s", c);
+            HR_LOG("Error setting %s", c);
             return NULL;
         }
     }
@@ -75,7 +75,7 @@ int trie_dict_insert(node_t *trie, const char* word) {
 
         trie = set_child(trie, c, (i == strlen(word) - 1));
         if (trie == NULL) {
-            LOG("Error setting child for %s.", c);
+            HR_LOG("Error setting child for %s.", c);
             return 1;
         }
     }
@@ -96,11 +96,11 @@ int trie_dict_search_or_remove(node_t *trie,
     memcpy(c, word+(*i), 1);
     c[1] = '\0';
 
-    LOG("iteration %lu: %s", *i, c);
+    HR_LOG("iteration %lu: %s", *i, c);
 
     int hg = hash_get(trie->hash, c, (void*)&child);
     if (hg < -1) {
-        LOG("Error getting %s", c);
+        HR_LOG("Error getting %s", c);
         return -1;
     }
 
@@ -118,7 +118,7 @@ int trie_dict_search_or_remove(node_t *trie,
             } else {
                 // Delete the current character from the hash.
                 if (hash_del(child->hash, c) != 0) {
-                    LOG("Error deleting character %s.", c);
+                    HR_LOG("Error deleting character %s.", c);
                     return -1;
                 }
             }

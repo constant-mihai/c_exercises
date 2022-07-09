@@ -20,7 +20,7 @@ void *thread_func(void *arg)
 
     int log_test_idx = log_find_module("log-test");
     assert(log_test_idx == 0);
-    LOG_AT(log_test_idx, "log message: %s", str);
+    HR_LOG_AT(log_test_idx, "log message: %s", str);
 
     log_destroy();
 
@@ -187,7 +187,7 @@ TEST_F(TestLog, TestSprintf) {
     char *buf = (char*)malloc(2 * DEFAULT_BUFFER_SIZE * sizeof(char));
     memset((void*)buf, 0x51, 2 * DEFAULT_BUFFER_SIZE);
 
-    LOG("%.*s", 2*DEFAULT_BUFFER_SIZE, buf);
+    HR_LOG("%.*s", 2*DEFAULT_BUFFER_SIZE, buf);
     ASSERT_TRUE(0 == assert_log_overflow(__func__, __LINE__));
 
     const char *a_test_message = "a test message";
@@ -206,9 +206,9 @@ TEST_F(TestLog, TestLogfile) {
     log_add_module("file-mod", log_config);
 
     const char *a_test_message = "a test message";
-    LOG_AT(log_find_module("file-mod"), "This is %s", a_test_message);
-    LOG_AT(log_find_module("file-mod"), "This is %s", a_test_message);
-    LOG_AT(log_find_module("file-mod"), "This is %s", a_test_message);
+    HR_LOG_AT(log_find_module("file-mod"), "This is %s", a_test_message);
+    HR_LOG_AT(log_find_module("file-mod"), "This is %s", a_test_message);
+    HR_LOG_AT(log_find_module("file-mod"), "This is %s", a_test_message);
 
     MR_LOG_AT(log_find_module("file-mod"), "This is");
     mr_log_string("value", a_test_message);
@@ -227,15 +227,6 @@ TEST_F(TestLog, TestReallocModule) {
         sprintf(full_name, "%s-%d", mod_name, i+1);
         log_add_module(full_name, log_config);
     }
-
-    const char *a_test_message = "a test message";
-    LOG_AT(log_find_module("file-mod"), "This is %s", a_test_message);
-    LOG_AT(log_find_module("file-mod"), "This is %s", a_test_message);
-    LOG_AT(log_find_module("file-mod"), "This is %s", a_test_message);
-
-    MR_LOG_AT(log_find_module("file-mod"), "This is");
-    mr_log_string("value", a_test_message);
-    MR_LOG_END();
 }
 
 
@@ -249,11 +240,11 @@ TEST_F(TestLog, TestMrLog) {
 
     ASSERT_TRUE(0 == assert_log_overflow(__func__, __LINE__));
 
-    ASSERT_MR_LOG(_ERR,
+    ASSERT_MR_LOG(_ERROR,
                   "\"error\":\"error value\"",
                   "test log",
                   ({ mr_log_error("error value"); }));
-    ASSERT_MR_LOG_AT(_ERR_AT,
+    ASSERT_MR_LOG_AT(_ERROR_AT,
                      LOG_DEFAULT_MODULE_INDEX,
                      "\"error\":\"error value\"",
                      "test log",

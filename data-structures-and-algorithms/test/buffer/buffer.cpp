@@ -42,6 +42,6 @@ TEST_F(TestBuffer, TestOperations) {
 
     void *it = NULL;
     while ((it = buffer_advance(&dst, sizeof(int))) != NULL) {
-        LOG("value: %d", *(int*)it);
+        HR_LOG("value: %d", *(int*)it);
     }
 }

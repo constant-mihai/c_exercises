@@ -13,4 +13,5 @@ node_t *btree_get_successor_node(node_t *n);
 int btree_remove(node_t *n, int val);
 int btree_find(node_t *n, int val);
 int btree_dump(node_t *n);
+void btree_destroy(node_t **n);
 

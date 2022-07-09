@@ -10,23 +10,23 @@
 #define MR_LOG(msg) \
     do{\
         mr_log_preamble(LOG_DEFAULT_MODULE_INDEX, \
-                        L_INFO, \
+                        LOG_LEVEL_INFO, \
                         __func__, __FILE__, __LINE__, \
                         (msg)); \
     } while(0)
 
-#define MR_LOG_CRIT(msg) \
+#define MR_LOG_FATAL(msg) \
     do{\
         mr_log_preamble(LOG_DEFAULT_MODULE_INDEX, \
-                        L_CRIT, \
+                        LOG_LEVEL_FATAL, \
                         __func__, __FILE__, __LINE__, \
                         (msg)); \
     } while(0)
 
-#define MR_LOG_ERR(msg) \
+#define MR_LOG_ERROR(msg) \
     do{\
         mr_log_preamble(LOG_DEFAULT_MODULE_INDEX, \
-                        L_ERR, \
+                        LOG_LEVEL_ERROR, \
                         __func__, __FILE__, __LINE__, \
                         (msg)); \
     } while(0)
@@ -34,7 +34,7 @@
 #define MR_LOG_WARN(msg) \
     do{\
         mr_log_preamble(LOG_DEFAULT_MODULE_INDEX, \
-                        L_WARN, \
+                        LOG_LEVEL_WARN, \
                         __func__, __FILE__, __LINE__, \
                         (msg)); \
     } while(0)
@@ -42,7 +42,7 @@
 #define MR_LOG_INFO(msg) \
     do{\
         mr_log_preamble(LOG_DEFAULT_MODULE_INDEX, \
-                        L_INFO, \
+                        LOG_LEVEL_INFO, \
                         __func__, __FILE__, __LINE__, \
                         (msg)); \
     } while(0)
@@ -50,12 +50,12 @@
 #define MR_LOG_DBG(msg) \
     do{\
         mr_log_preamble(LOG_DEFAULT_MODULE_INDEX, \
-                        L_DBG, \
+                        LOG_LEVEL_DBG, \
                         __func__, __FILE__, __LINE__, \
                         (msg)); \
     } while(0)
 
-#define MR_LOG_MEM(msg) \
+#define MR_LOG_TRACE(msg) \
     do{\
         mr_log_preamble(LOG_DEFAULT_MODULE_INDEX, \
                         (level), \
@@ -70,27 +70,27 @@
     do{\
         if (log_mod_idx >= 0) { \
             mr_log_preamble((log_mod_idx), \
-                            L_INFO, \
+                            LOG_LEVEL_INFO, \
                             __func__, __FILE__, __LINE__, \
                             (msg)); \
         }\
     } while(0)
 
-#define MR_LOG_CRIT_AT(log_mod_idx, msg) \
+#define MR_LOG_FATAL_AT(log_mod_idx, msg) \
     do{\
         if (log_mod_idx >= 0) { \
             mr_log_preamble((log_mod_idx), \
-                            L_INFO, \
+                            LOG_LEVEL_INFO, \
                             __func__, __FILE__, __LINE__, \
                             (msg)); \
         }\
     } while(0)
 
-#define MR_LOG_ERR_AT(log_mod_idx, msg) \
+#define MR_LOG_ERROR_AT(log_mod_idx, msg) \
     do{\
         if (log_mod_idx >= 0) { \
             mr_log_preamble((log_mod_idx), \
-                            L_ERR, \
+                            LOG_LEVEL_ERROR, \
                             __func__, __FILE__, __LINE__, \
                             (msg)); \
         }\
@@ -100,7 +100,7 @@
     do{\
         if (log_mod_idx >= 0) { \
             mr_log_preamble((log_mod_idx), \
-                            L_WARN, \
+                            LOG_LEVEL_WARN, \
                             __func__, __FILE__, __LINE__, \
                             (msg)); \
         }\
@@ -110,27 +110,27 @@
     do{\
         if (log_mod_idx >= 0) { \
             mr_log_preamble((log_mod_idx), \
-                            L_INFO, \
+                            LOG_LEVEL_INFO, \
                             __func__, __FILE__, __LINE__, \
                             (msg)); \
         }\
     } while(0)
 
-#define MR_LOG_DBG_AT(log_mod_idx, msg) \
+#define MR_LOG_DEBUG_AT(log_mod_idx, msg) \
     do{\
         if (log_mod_idx >= 0) { \
             mr_log_preamble((log_mod_idx), \
-                            L_DBG, \
+                            LOG_LEVEL_DEBUG, \
                             __func__, __FILE__, __LINE__, \
                             (msg)); \
         }\
     } while(0)
 
-#define MR_LOG_MEM_AT(log_mod_idx, msg) \
+#define MR_LOG_TRACE_AT(log_mod_idx, msg) \
     do{\
         if (log_mod_idx >= 0) { \
             mr_log_preamble((log_mod_idx), \
-                            L_MEM, \
+                            LOG_LEVEL_TRACE, \
                             __func__, __FILE__, __LINE__, \
                             (msg)); \
         }\
