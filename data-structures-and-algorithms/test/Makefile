@@ -1,2 +1,2 @@
-include Makefile.in
+include ../Makefile.in
 include Makefile.recipes

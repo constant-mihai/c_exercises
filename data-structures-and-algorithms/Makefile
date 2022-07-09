@@ -7,9 +7,7 @@ include Makefile.in
 # Phony 
 # ----------------------------- #
 # ----------------------------- #
-.PHONY: all subdirs test-subdirs clean cleanall debug debug-shared shared help clean-subdirs
-
-#verbose=@ #TODO
+.PHONY: all subdirs test-subdirs clean clean-all debug debug-shared shared help clean-subdirs
 
 h := $(wildcard *.h) $(call deep_source_search,$(subdirs),$(h_ext))
 hpp := $(wildcard *.hpp) $(call deep_source_search,$(subdirs),$(hpp_ext))
@@ -65,11 +63,11 @@ subdirs:
 
 %.o: %.$(cpp_ext)
 	@echo "    $< -> $@"
-	$(verbose)$(CXX) $(dependency_files) $(CPPFLAGS) $(optimize_flags) $(defines) $(INCLUDES) -c $(realpath $<) -o $@
+	$(verbose)$(CXX) $(dependency_files) $(CPPFLAGS) $(optimize_flags) $(static_analysis_flags) $(defines) $(INCLUDES) -c $(realpath $<) -o $@
 
 %.o: %.$(c_ext)
 	@echo "    $< -> $@"
-	$(verbose)$(CC) $(dependency_files) $(CFLAGS) $(optimize_flags) $(defines) $(INCLUDES) -c $(realpath $<) -o $@
+	$(verbose)$(CC) $(dependency_files) $(CFLAGS) $(optimize_flags) $(static_analysis_flags) $(defines) $(INCLUDES) -c $(realpath $<) -o $@
 
 shared: export CFLAGS += -fPIC
 shared: subdirs
@@ -89,7 +87,12 @@ test-subdirs: $(test_srcs) $(test_incs)
 	done;
 
 clean: clean-subdirs
-	rm -f *.o; rm -f *.so*;
+	rm -f *.o;
+	rm -f *.so*;
+	rm -f *.gcda
+	rm -f *.gcno
+	rm -f *.gcov
+	rm -f coverage.html;
 
 test-clean:
 	@for s in $(test_subdirs) ; do \
@@ -105,16 +108,9 @@ clean-subdirs:
 		echo "Exit $$s/" ; \
 	done;
 
-
-cleanall: 
+clean-all: 
 	$(if $(findstring yes,$(recursive)),$(clean_subdirectories),)
 	$(clean_main_fn)
-
-debug: CPPFLAGS += -g
-debug: all 
-
-debug-shared: CPPFLAGS += -g
-debug-shared: shared
 
 help:
 	@$(MAKE) --print-data-base --question all | \

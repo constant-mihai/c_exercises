@@ -27,27 +27,18 @@ all: $(objs) $(incs)
 # dependency files to provide header dependencies
 %.o: %.$(cpp_ext)
 	@echo "    $< -> $@"
-	$(verbose)$(CXX) $(dependency_files) $(CPPFLAGS) $(optimize_flags) $(defines) $(INCLUDES) -c $(realpath $<) -o $@
+	$(verbose)$(CXX) $(dependency_files) $(CPPFLAGS) $(optimize_flags) $(static_analysis_flags) $(defines) $(INCLUDES) -c $(realpath $<) -o $@
 
 %.o: %.$(c_ext)
 	@echo "    $< -> $@"
-	$(verbose)$(CC) $(dependency_files) $(CFLAGS) $(optimize_flags) $(defines) $(INCLUDES) -c $(realpath $<) -o $@
-
-.PHONY: clean-coverage
-clean-coverage:
-	@find . -type f -name '*.gcda' -delete
-	@find . -type f -name '*.gcno' -delete
+	$(verbose)$(CC) $(dependency_files) $(CFLAGS) $(optimize_flags) $(static_analysis_flags) $(defines) $(INCLUDES) -c $(realpath $<) -o $@
 
 .PHONY: clean
 clean:
 	@find . -type f -name '*.o' -delete
-
-.PHONY: distclean-coverage
-distclean-coverage:
-	@find . -type f -name '*.gcov' -delete
-
-.PHONY: distclean
-distclean: clean
 	@find . -type f -name '*.d' -delete
+	@find . -type f -name '*.gcda' -delete
+	@find . -type f -name '*.gcno' -delete
+	@find . -type f -name '*.gcov' -delete
 
 print-%: ; @echo $* = $($*)

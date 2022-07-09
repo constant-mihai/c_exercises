@@ -2,8 +2,24 @@
 # Implicit variables 
 # -------------------------------------- #
 # -------------------------------------- #
-CFLAGS += -Wall -fno-diagnostics-show-caret -Wextra -Wcast-align -Werror=return-type -g -O0 -Ddebug
-CPPFLAGS += -Wall -fno-diagnostics-show-caret -Wextra -Wcast-align -Werror=return-type -g -O0 -Ddebug -std=c++17
+
+# The c and cpp flags will get included by both the main Makefile and the subdir
+# Makefiles. That is why ?= is used here.
+CFLAGS ?= -Wall \
+		  -fno-diagnostics-show-caret \
+		  -Wextra \
+		  -Wcast-align \
+		  -Werror=return-type \
+
+CPPFLAGS ?= -Wall \
+			-fno-diagnostics-show-caret \
+			-Wextra \
+			-Wcast-align \
+			-Werror=return-type \
+			-std=c++17
+
+COVFLAGS ?= -fprofile-arcs \
+	        -ftest-coverage
 
 LAST_MAKEFILE := $(abspath $(lastword $(MAKEFILE_LIST)))
 SRC_DIR := $(patsubst %/,%,$(dir $(LAST_MAKEFILE)))
@@ -67,14 +83,38 @@ TEST_LIBRARIES := $(foreach lib,$(test_libraries),-l$(lib))
 
 dependency_files = -MP -MMD
 
-# turn on debugging with mode=debug
-ifeq ($(mode),debug)
+ifeq ($(v),1)
+	verbose =
+else
+	verbose = @
+endif
+
+# turn on debugging with debug=1
+ifeq ($(debug),1)
 	optimize_flags = -g -O0 -Ddebug $(COVFLAGS)
-	defines += -DHUMAN_READABLE_LOGS
+	LDFLAGS += -lgcov -coverage
 else
 	optimize_flags = -O3
 	LDFLAGS += -rdynamic
 	defines += -DRDYNAMIC
+endif
+
+# address sanitization:
+# https://developers.redhat.com/blog/2021/05/05/memory-error-checking-in-c-and-c-comparing-sanitizers-and-valgrind
+# https://www.osc.edu/resources/getting_started/howto/howto_use_address_sanitizer
+# https://gcc.gnu.org/onlinedocs/gcc/Instrumentation-Options.html
+ifeq ($(asan),1)
+	static_analysis_flags = -fsanitize=address \
+							-fsanitize=leak
+	LDFLAGS += -fsanitize=address \
+			   -fsanitize=leak \
+			   -static-libasan
+endif
+
+ifeq ($(race_check),1)
+	static_analysis_flags = -fsanitize=thread
+	LDFLAGS += -fsanitize=thread\
+			   -static-libasan
 endif
 
 #

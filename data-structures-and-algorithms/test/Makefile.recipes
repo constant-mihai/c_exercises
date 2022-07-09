@@ -31,21 +31,12 @@ all: $(objs) $(incs)
 	@echo "    $< -> $@"
 	$(verbose)$(CC) $(dependency_files) $(CFLAGS) $(optimize_flags) $(defines) $(INCLUDES) -c $(realpath $<) -o $@
 
-.PHONY: clean-coverage
-clean-coverage:
-	@find . -type f -name '*.gcda' -delete
-	@find . -type f -name '*.gcno' -delete
-
 .PHONY: clean
 clean:
 	@find . -type f -name '*.o' -delete
-
-.PHONY: distclean-coverage
-distclean-coverage:
-	@find . -type f -name '*.gcov' -delete
-
-.PHONY: distclean
-distclean: clean
 	@find . -type f -name '*.d' -delete
+	@find . -type f -name '*.gcda' -delete
+	@find . -type f -name '*.gcno' -delete
+	@find . -type f -name '*.gcov' -delete
 
 print-%: ; @echo $* = $($*)
