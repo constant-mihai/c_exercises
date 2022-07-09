@@ -1,3 +1,4 @@
+#include <errno.h>
 #include <stdarg.h>
 #include <threads.h>
 #include <unistd.h>
@@ -28,26 +29,71 @@ static __thread int initialized_s = 0;
 static __thread log_t *log_s;
 static __thread size_t current_module_idx_s;
 
-int log_open_fd(const char* filename) {
+static void _log_alloc(size_t start, size_t buf_size) {
+    for (size_t i=start; i<log_s->cap; i++) {
+        log_s->modules[i].buffer = malloc(buf_size*(sizeof(char)));
+        if (log_s->modules[i].buffer == NULL) {
+            fprintf(stderr, "failed to initialized module buffer: %s\n", strerror(errno));
+            exit(1);
+        }
+    }
+}
+
+static int _log_open_fd(const char* filename) {
     int fd = open (filename, O_WRONLY);
     if (fd == -1) {
-        perror("error opening log file\n");
+        fprintf(stderr, "error opening log file: %s\n", strerror(errno));
     }
     return fd;
 }
 
-void log_init(const char *appname) {
-    log_create(appname, "main");
+static void _log_set_config(log_config_t *dst, log_config_t *src) {
+    dst->log_to_console = src->log_to_console;
+    dst->level = src->level;
+    dst->filename = NULL;
+    if (src->filename != NULL) {
+        dst->filename = malloc((strlen(src->filename) + 1) * sizeof(char));
+        strcpy(dst->filename, src->filename);
+    }
 }
 
-void _log_init_modules(size_t start, size_t buf_size) {
-    for (size_t i=start; i<log_s->cap; i++) {
-        log_s->modules[i].buffer = malloc(buf_size*(sizeof(char)));
-        if (log_s->modules[i].buffer == NULL) {
-            perror("failed to initialized module buffer\n");
-            exit(1);
+void _log_flush(size_t module_idx) {
+    if (module_idx >= log_s->len) {
+        return;
+    }
+
+    if (log_s->modules[module_idx].config.log_to_console == 1) {
+        printf("%s", log_s->modules[module_idx].buffer);
+    }
+
+    if (log_s->modules[module_idx].file_fd > 0) {
+        int seek = lseek(log_s->modules[module_idx].file_fd, 0, SEEK_END);
+        if (seek == -1) {
+            fprintf(stderr, "error appending to log file: %s.\n", strerror(errno));
+        }
+        int nr = write(log_s->modules[module_idx].file_fd,
+                       log_s->modules[module_idx].buffer,
+                       strlen(log_s->modules[module_idx].buffer));
+        if (nr == -1) {
+            fprintf(stderr,"error writing to log file: %s\n", strerror(errno));
         }
     }
+
+    return;
+}
+
+void _mr_log_flush() {
+    size_t module_idx = current_module_idx_s;
+
+    // terminate the log
+    log_s->modules[module_idx].buffer[log_s->modules[module_idx].mr_log_pos++] = '}';
+    log_s->modules[module_idx].buffer[log_s->modules[module_idx].mr_log_pos++] = '\n';
+    log_s->modules[module_idx].buffer[log_s->modules[module_idx].mr_log_pos] = '\0';
+
+    _log_flush(current_module_idx_s);
+
+    current_module_idx_s = 0;
+    log_s->modules[current_module_idx_s].mr_log_pos = 0;
 }
 
 void log_create(const char* appname, const char* threadname) {
@@ -70,11 +116,12 @@ void log_create(const char* appname, const char* threadname) {
     log_s->len = 0;
     log_s->modules = calloc(log_s->cap, sizeof(log_module_t));
     if (log_s->modules == NULL) {
-        perror("failed to initialized module buffers\n");
+        fprintf(stderr, "failed to initialize log modules\n");
+        exit(1);
     }
 
     // pre-allocate the buffers for the modules.
-    _log_init_modules(0, DEFAULT_BUFFER_SIZE);
+    _log_alloc(0, DEFAULT_BUFFER_SIZE);
     initialized_s = 1;
 }
 
@@ -85,22 +132,13 @@ int log_find_module(const char* name) {
     return -1;
 }
 
-void _log_set_config(log_config_t *dst, log_config_t *src) {
-    dst->log_to_console = src->log_to_console;
-    dst->level = src->level;
-    dst->filename = NULL;
-    if (src->filename != NULL) {
-        dst->filename = malloc((strlen(src->filename) + 1) * sizeof(char));
-        strcpy(dst->filename, src->filename);
-    }
-}
-
 int log_add_module(const char* name, log_config_t config) {
     int found_module = 0, old_cap = 0;
 
+    // TODO: adding this check for every function is really ugly.
     if (initialized_s == 0) {
-        perror("logging is not initialized\n");
-        exit(1);
+        fprintf(stderr,"logging is not initialized\n");
+        return -1;
     }
 
     found_module = log_find_module(name);
@@ -108,67 +146,31 @@ int log_add_module(const char* name, log_config_t config) {
         return found_module;
     }
 
-    if (log_s->len > log_s->cap) { // TODO, this might be off by 1, change > with >=
+    if (log_s->len == log_s->cap) {
         old_cap = log_s->cap;
         log_s->cap *= 2;
         log_s->modules = realloc(log_s->modules,
-                                 log_s->cap * sizeof(log_module_t*)); 
+                                 log_s->cap * sizeof(log_module_t)); 
+        //TODO valgrind still complains here about:
+        // Uninitialised value was created by a heap allocation
+        bzero(log_s->modules + log_s->len, log_s->cap - log_s->len);
         if (log_s->modules == NULL) {
-            perror("failed to initialized module buffers\n");
+            fprintf(stderr, "failed to reallocate memory for modules.\n");
             exit(1);
         }
-        _log_init_modules(old_cap, DEFAULT_BUFFER_SIZE);
+        _log_alloc(old_cap, DEFAULT_BUFFER_SIZE);
     }
 
     _log_set_config(&log_s->modules[log_s->len].config, &config);
     log_s->modules[log_s->len].file_fd = -1;
     if (log_s->modules[log_s->len].config.filename != NULL) {
-        log_s->modules[log_s->len].file_fd = log_open_fd(log_s->modules[log_s->len].config.filename);
+        log_s->modules[log_s->len].file_fd = _log_open_fd(log_s->modules[log_s->len].config.filename);
     }
     log_s->modules[log_s->len].name = malloc((strlen(name)+1)*sizeof(char));
     strcpy(log_s->modules[log_s->len].name, name);
 
     log_s->len++;
     return log_s->len-1;
-}
-
-void _log_flush(size_t module_idx) {
-    if (module_idx >= log_s->len) {
-        return;
-    }
-
-    if (log_s->modules[module_idx].config.log_to_console == 1) {
-        printf("%s", log_s->modules[module_idx].buffer);
-    }
-
-    if (log_s->modules[module_idx].file_fd > 0) {
-        int seek = lseek(log_s->modules[module_idx].file_fd, 0, SEEK_END);
-        if (seek == -1) {
-            perror("error appending to log file.\n");
-        }
-        int nr = write(log_s->modules[module_idx].file_fd,
-                       log_s->modules[module_idx].buffer,
-                       strlen(log_s->modules[module_idx].buffer));
-        if (nr == -1) {
-            perror("write error\n");
-        }
-    }
-
-    return;
-}
-
-void _mr_log_flush() {
-    size_t module_idx = current_module_idx_s;
-
-    // terminate the log
-    log_s->modules[module_idx].buffer[log_s->modules[module_idx].mr_log_pos++] = '}';
-    log_s->modules[module_idx].buffer[log_s->modules[module_idx].mr_log_pos++] = '\n';
-    log_s->modules[module_idx].buffer[log_s->modules[module_idx].mr_log_pos] = '\0';
-
-    _log_flush(current_module_idx_s);
-
-    current_module_idx_s = 0;
-    log_s->modules[current_module_idx_s].mr_log_pos = 0;
 }
 
 void log_sprintf(size_t module_idx,
@@ -178,13 +180,11 @@ void log_sprintf(size_t module_idx,
                  int line,
                  const char *fmt, ...) {
     va_list args;
-    char error[128];
     struct timespec ts;
     struct tm tm;
 
     if (module_idx >= log_s->len) {
-        sprintf(error, "logging module %lu is not initialized.\n", module_idx);
-        perror(error);
+        fprintf(stderr, "logging module %lu is not initialized.\n", module_idx);
         return;
     }
 
@@ -274,7 +274,7 @@ void log_destroy() {
         if (log_s->modules[i].name != NULL) {
             if (log_s->modules[i].config.filename != NULL && log_s->modules[i].file_fd != -1) {
                 if (close(log_s->modules[i].file_fd == -1)) {
-                    perror("closing the log file\n");
+                    fprintf(stderr, "closing the log file: %s\n", strerror(errno));
                 }
                 free(log_s->modules[i].config.filename);
             }
@@ -334,15 +334,13 @@ void mr_log_preamble(size_t module_idx,
                      const char* file,
                      int line,
                      const char* msg) {
-    char error[128];
     struct timespec ts;
     struct tm tm;
 
     // TODO: what happens if the module is removed?
     // I need an log_find_module_by_idx
     if (module_idx >= log_s->len) {
-        sprintf(error, "logging module %lu is not initialized.\n", module_idx);
-        perror(error);
+        fprintf(stderr, "logging module %lu is not initialized.\n", module_idx);
         return;
     }
     current_module_idx_s = module_idx;

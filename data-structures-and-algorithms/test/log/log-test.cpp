@@ -196,9 +196,52 @@ TEST_F(TestLog, TestSprintf) {
     free(buf);
 }
 
+TEST_F(TestLog, TestLogfile) {
+    const char* filename = "file-mod.log";
+    log_config_t log_config = {
+        .log_to_console = 0,
+        .level = L_INFO,
+        .filename = (char*)filename
+    };
+    log_add_module("file-mod", log_config);
+
+    const char *a_test_message = "a test message";
+    LOG_AT(log_find_module("file-mod"), "This is %s", a_test_message);
+    LOG_AT(log_find_module("file-mod"), "This is %s", a_test_message);
+    LOG_AT(log_find_module("file-mod"), "This is %s", a_test_message);
+
+    MR_LOG_AT(log_find_module("file-mod"), "This is");
+    mr_log_string("value", a_test_message);
+    MR_LOG_END();
+}
+
+TEST_F(TestLog, TestReallocModule) {
+    const char* mod_name = "mod-name";
+    char full_name[128];
+    for (int i=0; i<2*DEFAULT_MODULES_NUM; i++) {
+        log_config_t log_config = {
+            .log_to_console = 1,
+            .level = L_INFO,
+            .filename = 0 
+        };
+        sprintf(full_name, "%s-%d", mod_name, i+1);
+        log_add_module(full_name, log_config);
+    }
+
+    const char *a_test_message = "a test message";
+    LOG_AT(log_find_module("file-mod"), "This is %s", a_test_message);
+    LOG_AT(log_find_module("file-mod"), "This is %s", a_test_message);
+    LOG_AT(log_find_module("file-mod"), "This is %s", a_test_message);
+
+    MR_LOG_AT(log_find_module("file-mod"), "This is");
+    mr_log_string("value", a_test_message);
+    MR_LOG_END();
+}
+
+
 TEST_F(TestLog, TestMrLog) {
     char *buf = (char*)malloc(2 * DEFAULT_BUFFER_SIZE * sizeof(char));
-    memset((void*)buf, 0x51, 2 * DEFAULT_BUFFER_SIZE);
+    memset((void*)buf, 0x53, 2 * DEFAULT_BUFFER_SIZE);
 
     MR_LOG(buf);
     MR_LOG_END();

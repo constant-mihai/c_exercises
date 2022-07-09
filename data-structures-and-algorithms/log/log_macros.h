@@ -38,7 +38,7 @@
 // https://gcc.gnu.org/onlinedocs/cpp/Variadic-Macros.html
 #define PRINTF(module_idx, level, msg, ...) \
     do {\
-        log_sprintf((module_idx), (level), __func__, __FILE__, __LINE__, msg , ##__VA_ARGS__);\
+        log_sprintf((module_idx), (level), __func__, __FILE__, __LINE__, (msg) , ##__VA_ARGS__);\
         _log_flush(module_idx);\
     }while(0) 
 
@@ -49,37 +49,37 @@
 #define LOG_DEFAULT_MODULE_INDEX 0
 #define LOG(msg, ...) \
     do{\
-        PRINTF(LOG_DEFAULT_MODULE_INDEX, L_INFO, msg, ##__VA_ARGS__);\
+        PRINTF(LOG_DEFAULT_MODULE_INDEX, L_INFO, (msg), ##__VA_ARGS__);\
     } while(0)
 
 #define LOG_CRIT(msg, ...) \
     do{\
-        PRINTF(LOG_DEFAULT_MODULE_INDEX, L_CRIT, msg, ##__VA_ARGS__);\
+        PRINTF(LOG_DEFAULT_MODULE_INDEX, L_CRIT, (msg), ##__VA_ARGS__);\
     } while(0)
 
 #define LOG_ERR(msg, ...) \
     do{\
-        PRINTF(LOG_DEFAULT_MODULE_INDEX, L_ERR, msg, ##__VA_ARGS__);\
+        PRINTF(LOG_DEFAULT_MODULE_INDEX, L_ERR, (msg), ##__VA_ARGS__);\
     } while(0)
 
 #define LOG_WARN(msg, ...) \
     do{\
-        PRINTF(LOG_DEFAULT_MODULE_INDEX, L_WARN, msg, ##__VA_ARGS__);\
+        PRINTF(LOG_DEFAULT_MODULE_INDEX, L_WARN, (msg), ##__VA_ARGS__);\
     } while(0)
 
 #define LOG_INFO(msg, ...) \
     do{\
-        PRINTF(LOG_DEFAULT_MODULE_INDEX, L_INFO, msg, ##__VA_ARGS__);\
+        PRINTF(LOG_DEFAULT_MODULE_INDEX, L_INFO, (msg), ##__VA_ARGS__);\
     } while(0)
 
 #define LOG_DBG(msg, ...) \
     do{\
-        PRINTF(LOG_DEFAULT_MODULE_INDEX, L_DBG, msg, ##__VA_ARGS__);\
+        PRINTF(LOG_DEFAULT_MODULE_INDEX, L_DBG, (msg), ##__VA_ARGS__);\
     } while(0)
 
 #define LOG_MEM(msg, ...) \
     do{\
-        PRINTF(LOG_DEFAULT_MODULE_INDEX, L_MEM, msg, ##__VA_ARGS__);\
+        PRINTF(LOG_DEFAULT_MODULE_INDEX, L_MEM, (msg), ##__VA_ARGS__);\
     } while(0)
 
 //
@@ -87,37 +87,37 @@
 //
 #define LOG_AT(log_mod_idx, msg, ...) \
     do{\
-        if (log_mod_idx >= 0) PRINTF(log_mod_idx, L_INFO, msg, ##__VA_ARGS__);\
+        if ((log_mod_idx) >= 0) PRINTF((log_mod_idx), L_INFO, (msg), ##__VA_ARGS__);\
     } while(0)
 
 #define LOG_CRIT_AT(log_mod_idx, msg, ...) \
     do{\
-        if (log_mod_idx >= 0) PRINTF(log_mod_idx, L_CRIT, msg, ##__VA_ARGS__);\
+        if ((log_mod_idx) >= 0) PRINTF((log_mod_idx), L_CRIT, (msg), ##__VA_ARGS__);\
     } while(0)
 
 #define LOG_ERR_AT(log_mod_idx, msg, ...) \
     do{\
-        if (log_mod_idx >= 0) PRINTF(log_mod_idx, L_ERR, msg, ##__VA_ARGS__);\
+        if ((log_mod_idx) >= 0) PRINTF((log_mod_idx), L_ERR, (msg), ##__VA_ARGS__);\
     } while(0)
 
 #define LOG_WARN_AT(log_mod_idx, msg, ...) \
     do{\
-        if (log_mod_idx >= 0) PRINTF(log_mod_idx, L_WARN, msg, ##__VA_ARGS__);\
+        if ((log_mod_idx) >= 0) PRINTF((log_mod_idx), L_WARN, (msg), ##__VA_ARGS__);\
     } while(0)
 
 #define LOG_INFO_AT(log_mod_idx, msg, ...) \
     do{\
-        if (log_mod_idx >= 0) PRINTF(log_mod_idx, L_INFO, msg, ##__VA_ARGS__);\
+        if ((log_mod_idx) >= 0) PRINTF((log_mod_idx), L_INFO, (msg), ##__VA_ARGS__);\
     } while(0)
 
 #define LOG_DBG_AT(log_mod_idx, msg, ...) \
     do{\
-        if (log_mod_idx >= 0) PRINTF(log_mod_idx, L_DBG, msg, ##__VA_ARGS__);\
+        if ((log_mod_idx) >= 0) PRINTF((log_mod_idx), L_DBG, (msg), ##__VA_ARGS__);\
     } while(0)
 
 #define LOG_MEM_AT(log_mod_idx, msg, ...) \
     do{\
-        PRINTF(log_mod_idx, L_MEM, msg, ##__VA_ARGS__);\
+        PRINTF((log_mod_idx), L_MEM, (msg), ##__VA_ARGS__);\
     } while(0)
 
 #define LOG_CREATE_DEFAULT(module_name, loglvl) \

@@ -7,9 +7,6 @@
         _mr_log_flush(); \
     }while(0)
 
-// 
-// MR LOG
-//
 #define MR_LOG(msg) \
     do{\
         mr_log_preamble(LOG_DEFAULT_MODULE_INDEX, \
