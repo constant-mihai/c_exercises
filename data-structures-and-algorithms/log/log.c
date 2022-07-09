@@ -238,26 +238,26 @@ uint8_t log_get_level(int idx) {
 
 const char* log_get_level_string(uint8_t level) {
     switch(level) {
-        case L_DEFAULT:
-            return "Default";
+        case LOG_LEVEL_DEFAULT:
+            return "DEFAULT";
             break;
-        case L_CRIT:
-            return "Critical";
+        case LOG_LEVEL_FATAL:
+            return "FATAL";
             break;
-        case L_ERR:
-            return "Error";
+        case LOG_LEVEL_ERROR:
+            return "ERROR";
             break;
-        case L_INFO:
-            return "Info";
+        case LOG_LEVEL_INFO:
+            return "INFO";
             break;
-        case L_WARN:
-            return "Warn";
+        case LOG_LEVEL_WARN:
+            return "WARN";
             break;
-        case L_DBG:
-            return "Debug";
+        case LOG_LEVEL_DEBUG:
+            return "DEBUG";
             break;
-        case L_MEM:
-            return "Memory";
+        case LOG_LEVEL_TRACE:
+            return "TRACE";
             break;
         default:
             return "Undefined";

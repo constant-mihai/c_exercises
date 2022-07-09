@@ -5,43 +5,116 @@
 
 #include "log/log.h"
 
-typedef struct node {
-    int val;
-    struct node *left;
-    struct node *right;
-    struct node *up;
-} node_t;
+#include "btree.h"
+
+static void _btree_unlink(node_t *n1) {
+    assert(n1 != NULL);
+    if (n1->up != NULL) {
+        if (n1->up->val > n1->val) {
+            n1->up->left = NULL;
+        }
+        if (n1->up->val < n1->val) {
+            n1->up->right= NULL;
+        }
+    }
+
+    n1->up = NULL;
+    n1->left = NULL;
+    n1->right = NULL;
+}
+
+static void _btree_reset_links(node_t *n1, node_t *n2) {
+    // attach n1 neighbours to n2
+    if (n1->up != NULL) {
+        if (n1->up->val > n2->val) {
+            n1->up->left = n2;
+        }
+        if (n1->up->val < n2->val) {
+            n1->up->right = n2;
+        }
+    }
+}
+
+static void _btree_replace(node_t *n1, node_t *n2) {
+    // attach n2 to new neighbours.
+    n2->up = n1->up;
+    n2->left = n1->left;
+    n2->right= n1->right;
+
+    _btree_reset_links(n1, n2);
+
+    n1->left->up = n2;
+    n1->right->up = n2;
+    return;
+}
+
+static int _btree_remove_node(node_t *n) {
+    HR_LOG("remove: %d", n->val);
+    // if leaf delete.
+    if (n->left == NULL && n->right == NULL) {
+        HR_LOG("leaf node");
+        _btree_unlink(n);
+        free(n);
+        return 0;
+    }
+
+    // if it has two children find successor
+    if (n->left != NULL && n->right != NULL) {
+        HR_LOG("%d node has two children", n->val);
+        node_t *suc = btree_get_successor_node(n);
+        HR_LOG("successor is: %d", suc->val);
+        _btree_replace(n, suc);
+        // n will now be a leaf and can be removed.
+        free(n);
+        return 0;
+    }
+
+    // if has child swap and delete
+    if (n->left != NULL) {
+        HR_LOG("has left child");
+        n->val = n->left->val;
+        free(n->left);
+        return 0;
+    } else if (n->right != NULL) {
+        HR_LOG("has right child");
+        n->val = n->right->val;
+        free(n->right);
+        return 0;
+    }
+
+    return 1;
+}
 
 void btree_init() {
-    LOG_CREATE_DEFAULT("btree", L_INFO);
+    LOG_CREATE_DEFAULT("btree", LOG_LEVEL_INFO);
 }
 
 int btree_insert(node_t **n, node_t *parent, int val) {
     if (n == NULL) {
-        LOG("n cannot be null.");
+        HR_LOG("n cannot be null.");
         return -1;
     }
 
     if (*n == NULL) {
-        LOG("Creating leaf node: %d", val);
+        HR_LOG("Creating leaf node: %d", val);
         *n = (node_t*)calloc(1, sizeof(node_t));
         if (*n == NULL) {
-            LOG("oom");
+            HR_LOG("oom");
             return -1;
         }
         (*n)->val = val;
         (*n)->up = parent;
     } else {
-        LOG("node exists, check left/right");
+        HR_LOG("node exists, check left/right");
         node_t **left = &(*n)->left;
         node_t **right = &(*n)->right;
         if ((*n)->val > val) {
-            LOG("%d > %d",(*n)->val ,val);
-            LOG("Insert node left");
+            HR_LOG("%d > %d",(*n)->val ,val);
+            HR_LOG("Insert node left");
             btree_insert(left, *n, val);
         } else if ((*n)->val < val) {
-            LOG("Insert node right");
-            LOG("%d < %d",(*n)->val ,val);
+            HR_LOG("Insert node right");
+            HR_LOG("%d < %d",(*n)->val ,val);
             btree_insert(right, *n, val);
         }
 
@@ -63,87 +136,9 @@ node_t *btree_get_successor_node(node_t *n) {
     return successor;
 }
 
-void _btree_unlink(node_t *n1) {
-    assert(n1 != NULL);
-    if (n1->up != NULL) {
-        if (n1->up->val > n1->val) {
-            n1->up->left = NULL;
-        }
-        if (n1->up->val < n1->val) {
-            n1->up->right= NULL;
-        }
-    }
-
-    n1->up = NULL;
-    n1->left = NULL;
-    n1->right = NULL;
-}
-
-void _btree_reset_links(node_t *n1, node_t *n2) {
-    // attach n1 neighbours to n2
-    if (n1->up != NULL) {
-        if (n1->up->val > n2->val) {
-            n1->up->left = n2;
-        }
-        if (n1->up->val < n2->val) {
-            n1->up->right = n2;
-        }
-    }
-}
-
-void _btree_replace(node_t *n1, node_t *n2) {
-    // attach n2 to new neighbours.
-    n2->up = n1->up;
-    n2->left = n1->left;
-    n2->right= n1->right;
-
-    _btree_reset_links(n1, n2);
-
-    n1->left->up = n2;
-    n1->right->up = n2;
-    return;
-}
-
-int _btree_remove_node(node_t *n) {
-    LOG("remove: %d", n->val);
-    // if leaf delete.
-    if (n->left == NULL && n->right == NULL) {
-        LOG("leaf node");
-        _btree_unlink(n);
-        free(n);
-        return 0;
-    }
-
-    // if it has two children find successor
-    if (n->left != NULL && n->right != NULL) {
-        LOG("%d node has two children", n->val);
-        node_t *suc = btree_get_successor_node(n);
-        LOG("successor is: %d", suc->val);
-        _btree_replace(n, suc);
-        // n will now be a leaf and can be removed.
-        free(n);
-        return 0;
-    }
-
-    // if has child swap and delete
-    if (n->left != NULL) {
-        LOG("has left child");
-        n->val = n->left->val;
-        free(n->left);
-        return 0;
-    } else if (n->right != NULL) {
-        LOG("has right child");
-        n->val = n->right->val;
-        free(n->right);
-        return 0;
-    }
-
-    return 1;
-}
-
 int btree_remove(node_t *n, int val) {
     if (n == NULL) {
-        LOG("value: %d not found", val);
+        HR_LOG("value: %d not found", val);
         return 1;
     }
 

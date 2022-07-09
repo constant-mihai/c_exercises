@@ -9,7 +9,7 @@ extern "C" {
 class TestTrie: public ::testing::Test {
     protected:
         void SetUp() override {
-            LOG_CREATE_DEFAULT("trie-test", L_INFO);
+            LOG_CREATE_DEFAULT("trie-test", LOG_LEVEL_INFO);
         }
 
         // void TearDown() override {}

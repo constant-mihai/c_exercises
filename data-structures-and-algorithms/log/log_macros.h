@@ -42,82 +42,84 @@
         _log_flush(module_idx);\
     }while(0) 
 
-//TODO these overlap with macros in syslog.h 
 //
 // LOG at default index
+// They are prefixed with HR_ because of two reasons:
+// 1. syslog.h also has macros like LOG_INFO, LOG_DEBUG, aso defined
+// 2. To differantiate them form the machine readable logs, prefixed with MR_.
 //
 #define LOG_DEFAULT_MODULE_INDEX 0
-#define LOG(msg, ...) \
+#define HR_LOG(msg, ...) \
     do{\
-        PRINTF(LOG_DEFAULT_MODULE_INDEX, L_INFO, (msg), ##__VA_ARGS__);\
+        PRINTF(LOG_DEFAULT_MODULE_INDEX, LOG_LEVEL_INFO, (msg), ##__VA_ARGS__);\
     } while(0)
 
-#define LOG_CRIT(msg, ...) \
+#define HR_LOG_FATAL(msg, ...) \
     do{\
-        PRINTF(LOG_DEFAULT_MODULE_INDEX, L_CRIT, (msg), ##__VA_ARGS__);\
+        PRINTF(LOG_DEFAULT_MODULE_INDEX, LOG_LEVEL_FATAL, (msg), ##__VA_ARGS__);\
     } while(0)
 
-#define LOG_ERR(msg, ...) \
+#define HR_LOG_ERROR(msg, ...) \
     do{\
-        PRINTF(LOG_DEFAULT_MODULE_INDEX, L_ERR, (msg), ##__VA_ARGS__);\
+        PRINTF(LOG_DEFAULT_MODULE_INDEX, LOG_LEVEL_ERROR, (msg), ##__VA_ARGS__);\
     } while(0)
 
-#define LOG_WARN(msg, ...) \
+#define HR_LOG_WARN(msg, ...) \
     do{\
-        PRINTF(LOG_DEFAULT_MODULE_INDEX, L_WARN, (msg), ##__VA_ARGS__);\
+        PRINTF(LOG_DEFAULT_MODULE_INDEX, LOG_LEVEL_WARN, (msg), ##__VA_ARGS__);\
     } while(0)
 
-#define LOG_INFO(msg, ...) \
+#define HR_LOG_INFO(msg, ...) \
     do{\
-        PRINTF(LOG_DEFAULT_MODULE_INDEX, L_INFO, (msg), ##__VA_ARGS__);\
+        PRINTF(LOG_DEFAULT_MODULE_INDEX, LOG_LEVEL_INFO, (msg), ##__VA_ARGS__);\
     } while(0)
 
-#define LOG_DBG(msg, ...) \
+#define HR_LOG_DEBUG(msg, ...) \
     do{\
-        PRINTF(LOG_DEFAULT_MODULE_INDEX, L_DBG, (msg), ##__VA_ARGS__);\
+        PRINTF(LOG_DEFAULT_MODULE_INDEX, LOG_LEVEL_DEBUG, (msg), ##__VA_ARGS__);\
     } while(0)
 
-#define LOG_MEM(msg, ...) \
+#define HR_LOG_TRACE(msg, ...) \
     do{\
-        PRINTF(LOG_DEFAULT_MODULE_INDEX, L_MEM, (msg), ##__VA_ARGS__);\
+        PRINTF(LOG_DEFAULT_MODULE_INDEX, LOG_LEVEL_TRACE, (msg), ##__VA_ARGS__);\
     } while(0)
 
 //
 // Module based
 //
-#define LOG_AT(log_mod_idx, msg, ...) \
+#define HR_LOG_AT(log_mod_idx, msg, ...) \
     do{\
-        if ((log_mod_idx) >= 0) PRINTF((log_mod_idx), L_INFO, (msg), ##__VA_ARGS__);\
+        if ((log_mod_idx) >= 0) PRINTF((log_mod_idx), LOG_LEVEL_INFO, (msg), ##__VA_ARGS__);\
     } while(0)
 
-#define LOG_CRIT_AT(log_mod_idx, msg, ...) \
+#define HR_LOG_FATAL_AT(log_mod_idx, msg, ...) \
     do{\
-        if ((log_mod_idx) >= 0) PRINTF((log_mod_idx), L_CRIT, (msg), ##__VA_ARGS__);\
+        if ((log_mod_idx) >= 0) PRINTF((log_mod_idx), LOG_LEVEL_FATAL, (msg), ##__VA_ARGS__);\
     } while(0)
 
-#define LOG_ERR_AT(log_mod_idx, msg, ...) \
+#define HR_LOG_ERROR_AT(log_mod_idx, msg, ...) \
     do{\
-        if ((log_mod_idx) >= 0) PRINTF((log_mod_idx), L_ERR, (msg), ##__VA_ARGS__);\
+        if ((log_mod_idx) >= 0) PRINTF((log_mod_idx), LOG_LEVEL_ERROR, (msg), ##__VA_ARGS__);\
     } while(0)
 
-#define LOG_WARN_AT(log_mod_idx, msg, ...) \
+#define HR_LOG_WARN_AT(log_mod_idx, msg, ...) \
     do{\
-        if ((log_mod_idx) >= 0) PRINTF((log_mod_idx), L_WARN, (msg), ##__VA_ARGS__);\
+        if ((log_mod_idx) >= 0) PRINTF((log_mod_idx), LOG_LEVEL_WARN, (msg), ##__VA_ARGS__);\
     } while(0)
 
-#define LOG_INFO_AT(log_mod_idx, msg, ...) \
+#define HR_LOG_INFO_AT(log_mod_idx, msg, ...) \
     do{\
-        if ((log_mod_idx) >= 0) PRINTF((log_mod_idx), L_INFO, (msg), ##__VA_ARGS__);\
+        if ((log_mod_idx) >= 0) PRINTF((log_mod_idx), LOG_LEVEL_INFO, (msg), ##__VA_ARGS__);\
     } while(0)
 
-#define LOG_DBG_AT(log_mod_idx, msg, ...) \
+#define HR_LOG_DEBUG_AT(log_mod_idx, msg, ...) \
     do{\
-        if ((log_mod_idx) >= 0) PRINTF((log_mod_idx), L_DBG, (msg), ##__VA_ARGS__);\
+        if ((log_mod_idx) >= 0) PRINTF((log_mod_idx), LOG_LEVEL_DEBUG, (msg), ##__VA_ARGS__);\
     } while(0)
 
-#define LOG_MEM_AT(log_mod_idx, msg, ...) \
+#define HR_LOG_TRACE_AT(log_mod_idx, msg, ...) \
     do{\
-        PRINTF((log_mod_idx), L_MEM, (msg), ##__VA_ARGS__);\
+        PRINTF((log_mod_idx), LOG_LEVEL_TRACE, (msg), ##__VA_ARGS__);\
     } while(0)
 
 #define LOG_CREATE_DEFAULT(module_name, loglvl) \

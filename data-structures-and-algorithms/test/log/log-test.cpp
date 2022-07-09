@@ -12,7 +12,7 @@ extern "C" {
 void *thread_func(void *arg)
 {
     const char *str = (const char*) arg;
-    LOG_CREATE_DEFAULT("log-test", L_INFO);
+    LOG_CREATE_DEFAULT("log-test", LOG_LEVEL_INFO);
 
     if (!strcmp(str, "thread 1")) {
         sleep(1.5);
@@ -44,7 +44,7 @@ class TestLog: public ::testing::Test {
         void SetUp() override
         {
             log_create("test-log", "main");
-            LOG_ADD_MODULE("default", 1, L_INFO, NULL);
+            LOG_ADD_MODULE("default", 1, LOG_LEVEL_INFO, NULL);
 
             m_old_stdout = dup(STDOUT_FILENO);
             ASSERT_TRUE(0 == pipe2(m_pipe, O_NONBLOCK));
@@ -200,7 +200,7 @@ TEST_F(TestLog, TestLogfile) {
     const char* filename = "file-mod.log";
     log_config_t log_config = {
         .log_to_console = 0,
-        .level = L_INFO,
+        .level = LOG_LEVEL_INFO,
         .filename = (char*)filename
     };
     log_add_module("file-mod", log_config);
@@ -221,7 +221,7 @@ TEST_F(TestLog, TestReallocModule) {
     for (int i=0; i<2*DEFAULT_MODULES_NUM; i++) {
         log_config_t log_config = {
             .log_to_console = 1,
-            .level = L_INFO,
+            .level = LOG_LEVEL_INFO,
             .filename = 0 
         };
         sprintf(full_name, "%s-%d", mod_name, i+1);

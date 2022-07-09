@@ -10,13 +10,13 @@
 #include <stdlib.h>
 
 typedef enum {
-    L_DEFAULT = 0,
-    L_CRIT    = 1,
-    L_ERR     = 2,
-    L_INFO    = 3,
-    L_WARN    = 4,
-    L_DBG     = 5,
-    L_MEM     = 6,
+    LOG_LEVEL_DEFAULT = 0,
+    LOG_LEVEL_FATAL   = 1,
+    LOG_LEVEL_ERROR   = 2,
+    LOG_LEVEL_INFO    = 3,
+    LOG_LEVEL_WARN    = 4,
+    LOG_LEVEL_DEBUG   = 5,
+    LOG_LEVEL_TRACE   = 6,
 } LoggingLevels;
 
 typedef struct {
