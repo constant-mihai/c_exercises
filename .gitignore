@@ -66,3 +66,6 @@ coverage.*.html
 # binaries
 dsaa_test
 dsaa
+
+# log
+*.log
