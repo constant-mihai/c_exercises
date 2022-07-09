@@ -51,6 +51,11 @@ Module.symvers
 Mkfile.old
 dkms.conf
 
+# coverage files
+*.gcno
+*.gcda
+coverage.html
+
 # vim
 *.swp
 *.swo
@@ -58,3 +63,4 @@ dkms.conf
 
 # binaries
 dsaa_test
+dsaa
