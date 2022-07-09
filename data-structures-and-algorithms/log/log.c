@@ -21,8 +21,8 @@ typedef struct log {
     size_t cap;
 } log_t;
 
-static char* hostname_s;
-static char* appname_s;
+static __thread char* hostname_s;
+static __thread char* appname_s;
 static __thread char* threadname_s;
 static __thread int initialized_s = 0;
 static __thread log_t *log_s;
@@ -51,29 +51,31 @@ void _log_init_modules(size_t start, size_t buf_size) {
 }
 
 void log_create(const char* appname, const char* threadname) {
-    if (initialized_s == 0) {
-        log_s = (log_t*) calloc(1, sizeof(log_t)); 
-
-        hostname_s = malloc(HOST_NAME_MAX*sizeof(char));
-        gethostname(hostname_s, HOST_NAME_MAX);
-
-        appname_s = malloc((strlen(appname)+1)*sizeof(char));
-        strcpy(appname_s, appname);
-
-        threadname_s = malloc((strlen(threadname)+1)*sizeof(char));
-        strcpy(threadname_s, threadname);
-
-        log_s->cap = DEFAULT_MODULES_NUM;
-        log_s->len = 0;
-        log_s->modules = malloc(log_s->cap * sizeof(log_module_t)); 
-        if (log_s->modules == NULL) {
-            perror("failed to initialized module buffers\n");
-        }
-
-        // pre-allocate the buffers for the modules.
-        _log_init_modules(0, DEFAULT_BUFFER_SIZE);
-        initialized_s = 1;
+    if (initialized_s == 1) {
+        return;
     }
+
+    log_s = (log_t*) calloc(1, sizeof(log_t)); 
+
+    hostname_s = malloc(HOST_NAME_MAX*sizeof(char));
+    gethostname(hostname_s, HOST_NAME_MAX);
+
+    appname_s = malloc((strlen(appname)+1)*sizeof(char));
+    strcpy(appname_s, appname);
+
+    threadname_s = malloc((strlen(threadname)+1)*sizeof(char));
+    strcpy(threadname_s, threadname);
+
+    log_s->cap = DEFAULT_MODULES_NUM;
+    log_s->len = 0;
+    log_s->modules = calloc(log_s->cap, sizeof(log_module_t));
+    if (log_s->modules == NULL) {
+        perror("failed to initialized module buffers\n");
+    }
+
+    // pre-allocate the buffers for the modules.
+    _log_init_modules(0, DEFAULT_BUFFER_SIZE);
+    initialized_s = 1;
 }
 
 int log_find_module(const char* name) {
@@ -106,7 +108,7 @@ int log_add_module(const char* name, log_config_t config) {
         return found_module;
     }
 
-    if (log_s->len > log_s->cap) {
+    if (log_s->len > log_s->cap) { // TODO, this might be off by 1, change > with >=
         old_cap = log_s->cap;
         log_s->cap *= 2;
         log_s->modules = realloc(log_s->modules,
@@ -157,6 +159,8 @@ void _log_flush(size_t module_idx) {
 
 void _mr_log_flush() {
     size_t module_idx = current_module_idx_s;
+
+    // terminate the log
     log_s->modules[module_idx].buffer[log_s->modules[module_idx].mr_log_pos++] = '}';
     log_s->modules[module_idx].buffer[log_s->modules[module_idx].mr_log_pos++] = '\n';
     log_s->modules[module_idx].buffer[log_s->modules[module_idx].mr_log_pos] = '\0';
@@ -202,7 +206,7 @@ void log_sprintf(size_t module_idx,
     // variable number of arguments.  These functions do not call the va_end macro.  Be‐
     // cause they invoke the va_arg macro, the value of ap is undefined after the  call.
     // See stdarg(3).
-    // 
+    //
     // The  functions  snprintf()  and	vsnprintf() write at most size bytes (including the
     // terminating null byte ('\0')) to str.
     //
@@ -213,12 +217,13 @@ void log_sprintf(size_t module_idx,
     // been  available.   Thus,  a  return  value of size or more means that the output was
     // truncated.  (See also below under NOTES.)
     pos += vsnprintf(log_s->modules[module_idx].buffer+pos, DEFAULT_BUFFER_SIZE-pos-1, fmt, args);
-    if (pos >= DEFAULT_BUFFER_SIZE-1) {
+    if (pos > DEFAULT_BUFFER_SIZE-1) {
         log_s->modules[module_idx].buffer[DEFAULT_BUFFER_SIZE-2] = '\n';
         log_s->modules[module_idx].buffer[DEFAULT_BUFFER_SIZE-1] = '\0';
+    } else {
+        log_s->modules[module_idx].buffer[pos++] = '\n';
+        log_s->modules[module_idx].buffer[pos++] = '\0';
     }
-    log_s->modules[module_idx].buffer[pos++] = '\n';
-    log_s->modules[module_idx].buffer[pos++] = '\0';
 
     va_end(args);
 }
@@ -261,6 +266,10 @@ const char* log_get_level_string(uint8_t level) {
 }
 
 void log_destroy() {
+    if (initialized_s == 0) {
+        return;
+    }
+
     for (size_t i=0; i<log_s->cap; i++) {
         if (log_s->modules[i].name != NULL) {
             if (log_s->modules[i].config.filename != NULL && log_s->modules[i].file_fd != -1) {
@@ -277,10 +286,46 @@ void log_destroy() {
     free(log_s->modules);
     log_s->len = 0;
     log_s->cap = 0;
+    free(log_s);
 
     free(hostname_s);
     free(appname_s);
     free(threadname_s);
+    initialized_s = 0;
+}
+
+void mr_snprintf(size_t module_idx, const char *msg, ...) {
+    int n = log_s->modules[module_idx].mr_log_pos;
+    char *mr_log_buf = log_s->modules[module_idx].buffer;
+
+    va_list args;
+    va_start(args, msg);
+    if (n == 0) {
+        n += sprintf(mr_log_buf, "{");
+        n += vsnprintf(mr_log_buf + n,
+                       DEFAULT_BUFFER_SIZE - n - 3 /* \"}\n\0 */,
+                       msg , args);
+    } else if (n > DEFAULT_BUFFER_SIZE - n - 3) {
+        // nothing to do we have already overflown.
+    } else {
+        n += sprintf(mr_log_buf + n, ",");
+        n += vsnprintf(mr_log_buf + n,
+                       DEFAULT_BUFFER_SIZE - n - 3 /* \"}\n\0 */,
+                       msg, args);
+    }
+
+    // need to check again if the last write overflowed.
+    if (n > DEFAULT_BUFFER_SIZE-3 /* \"}\n\0 */ ) {
+        // rewind on "\0" to make room for \"}\n\0
+        log_s->modules[module_idx].mr_log_pos = DEFAULT_BUFFER_SIZE-4;
+        // TODO: this is pretty hacky. the \" gets pushed out if the buffer overflows.
+        // should have some kind of validation functions which truncate stuff and wrap
+        // them arround in \"\".
+        log_s->modules[module_idx].buffer[log_s->modules[module_idx].mr_log_pos++] = '"';
+    } else {
+        log_s->modules[module_idx].mr_log_pos = n;
+    }
+    va_end(args);
 }
 
 void mr_log_preamble(size_t module_idx,
@@ -293,6 +338,8 @@ void mr_log_preamble(size_t module_idx,
     struct timespec ts;
     struct tm tm;
 
+    // TODO: what happens if the module is removed?
+    // I need an log_find_module_by_idx
     if (module_idx >= log_s->len) {
         sprintf(error, "logging module %lu is not initialized.\n", module_idx);
         perror(error);
@@ -310,52 +357,41 @@ void mr_log_preamble(size_t module_idx,
     //TODO: make the timestamp format configurable
     //TODO: in fact, this looks really repeatable code, so I assume I can
     //put these values in some vectors and then iterate through them
-    MR_SNPRINTF(module_idx, "\"ts\":\""LOG_TIME_FORMAT"\"", LOG_TIME_VALUE(tm, ts));
-    MR_SNPRINTF(module_idx, "\"hostname\":\"%s\"", hostname_s);
-    MR_SNPRINTF(module_idx, "\"app\":\"%s\"", appname_s);
-    MR_SNPRINTF(module_idx, "\"level\":\"%s\"", LOG_LEVEL_VALUE(level));
-    MR_SNPRINTF(module_idx, "\"location\":\"%s():%s:%u\"", func, file, line);
-    MR_SNPRINTF(module_idx, "\"thread\":\"%s\"", threadname_s);
+    char ts_fmt[128];
+    const char *ts_fmt_key = "\"ts\":";
+    strcpy(ts_fmt, ts_fmt_key);
+    strcat(ts_fmt, "\"");
+    strcat(ts_fmt, LOG_TIME_FORMAT);
+    strcat(ts_fmt, "\"");
+    mr_snprintf(module_idx, ts_fmt, LOG_TIME_VALUE(tm, ts));
+    mr_snprintf(module_idx, "\"hostname\":\"%s\"", hostname_s);
+    mr_snprintf(module_idx, "\"app\":\"%s\"", appname_s);
+    mr_snprintf(module_idx, "\"level\":\"%s\"", LOG_LEVEL_VALUE(level));
+    mr_snprintf(module_idx, "\"location\":\"%s():%s:%u\"", func, file, line);
+    mr_snprintf(module_idx, "\"thread\":\"%s\"", threadname_s);
+    mr_snprintf(module_idx, "\"msg\":\"%s\"", msg);
 
-    MR_SNPRINTF(module_idx, "\"msg\":\"%s\"", msg);
-done:
     return;
 }
 
-int mr_log_error(const char* error) {
-    int ret = 0;
-    MR_SNPRINTF_RETVAL(ret, current_module_idx_s, "\"error\":\"%s\"", error);
-done:
-    return ret;
+void mr_log_error(const char* error) {
+    mr_snprintf(current_module_idx_s, "\"error\":\"%s\"", error);
 }
 
-int mr_log_buffer(const char* label, int len, const char* buf) {
-    int ret = 0;
-    MR_SNPRINTF_RETVAL(ret,
-                       current_module_idx_s,
+void mr_log_buffer(const char* label, int len, const char* buf) {
+    mr_snprintf(current_module_idx_s,
                        "\"%s\":\"%.*s\"",
                        label, len, buf);
-done:
-    return ret;
 }
 
-int mr_log_string(const char* label, const char* buf) {
-    int ret = 0;
-    MR_SNPRINTF_RETVAL(ret,
-                       current_module_idx_s,
+void mr_log_string(const char* label, const char* buf) {
+    mr_snprintf(current_module_idx_s,
                        "\"%s\":\"%s\"",
                        label, buf);
-done:
-    return ret;
-
 }
 
-int mr_log_uint64(const char* label, uint64_t val) {
-    int ret = 0;
-    MR_SNPRINTF_RETVAL(ret,
-                       current_module_idx_s,
+void mr_log_uint64(const char* label, uint64_t val) {
+    mr_snprintf(current_module_idx_s,
                        "\"%s\":\"%ld\"",
                        label, val);
-done:
-    return ret;
 }

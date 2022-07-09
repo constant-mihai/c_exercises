@@ -44,6 +44,8 @@ const char* log_get_level_string(uint8_t level);
 void log_destroy();
 
 // machine readable
+void mr_snprintf(size_t module_idx, const char* msg, ...);
+
 void mr_log_preamble(size_t module_idx,
                      int level,
                      const char* func,
@@ -51,7 +53,7 @@ void mr_log_preamble(size_t module_idx,
                      int line,
                      const char *msg);
 
-int mr_log_error(const char* error);
-int mr_log_buffer(const char* label, int len, const char* buf);
-int mr_log_string(const char* label, const char* buf);
-int mr_log_uint64(const char* label, uint64_t val);
+void mr_log_error(const char* error);
+void mr_log_buffer(const char* label, int len, const char* buf);
+void mr_log_string(const char* label, const char* buf);
+void mr_log_uint64(const char* label, uint64_t val);
