@@ -54,7 +54,9 @@ dkms.conf
 # coverage files
 *.gcno
 *.gcda
+coverage.css
 coverage.html
+coverage.*.html
 
 # vim
 *.swp
