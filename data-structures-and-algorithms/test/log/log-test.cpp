@@ -187,7 +187,7 @@ TEST_F(TestLog, TestSprintf) {
     char *buf = (char*)malloc(2 * DEFAULT_BUFFER_SIZE * sizeof(char));
     memset((void*)buf, 0x51, 2 * DEFAULT_BUFFER_SIZE);
 
-    LOG("%s", buf);
+    LOG("%.*s", 2*DEFAULT_BUFFER_SIZE, buf);
     ASSERT_TRUE(0 == assert_log_overflow(__func__, __LINE__));
 
     const char *a_test_message = "a test message";
@@ -242,6 +242,7 @@ TEST_F(TestLog, TestReallocModule) {
 TEST_F(TestLog, TestMrLog) {
     char *buf = (char*)malloc(2 * DEFAULT_BUFFER_SIZE * sizeof(char));
     memset((void*)buf, 0x53, 2 * DEFAULT_BUFFER_SIZE);
+    buf[(2*DEFAULT_BUFFER_SIZE)-1] = '\0';
 
     MR_LOG(buf);
     MR_LOG_END();

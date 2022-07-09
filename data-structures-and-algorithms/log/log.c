@@ -153,7 +153,7 @@ int log_add_module(const char* name, log_config_t config) {
                                  log_s->cap * sizeof(log_module_t)); 
         //TODO valgrind still complains here about:
         // Uninitialised value was created by a heap allocation
-        bzero(log_s->modules + log_s->len, log_s->cap - log_s->len);
+        memset(log_s->modules + log_s->len, 0, (log_s->cap - log_s->len) * sizeof(log_module_t));
         if (log_s->modules == NULL) {
             fprintf(stderr, "failed to reallocate memory for modules.\n");
             exit(1);
